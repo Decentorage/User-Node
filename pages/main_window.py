@@ -1,11 +1,10 @@
 from PyQt5 import QtCore, QtWidgets
 import os
-from utils import process_file, divide_file_and_process
+from utils import process_file, divide_file_and_process, retrieve_original_file
 from psutil import virtual_memory
 
 
 class MainWindow(QtWidgets.QWidget):
-
     # Signals
     logout_switch = QtCore.pyqtSignal()
 
@@ -73,7 +72,14 @@ class MainWindow(QtWidgets.QWidget):
         self.status.setText("Processing Done")
 
     def retrieve_file(self):
-        pass
+        # meta data needed
+        output_filename = os.path.realpath("lost.mp4.enc")
+        segments_directory = os.path.realpath("output")
+        file_segmented = False
+        key = self.key_editor.text()
+        if len(key) > 32:
+            return
+        retrieve_original_file(segments_directory, output_filename, key, file_segmented)
 
     def upload(self):
         if not self.filename:
