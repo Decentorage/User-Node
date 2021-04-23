@@ -9,8 +9,8 @@ class PageController:
     main_window_index = 1
 
     def __init__(self):
-        width = 500
-        height = 500
+        width = 800
+        height = 600
 
         self.application_window = QtWidgets.QStackedWidget()
         self.application_window.resize(width, height)
