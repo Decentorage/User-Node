@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtWidgets
 import os
-from utils import encrypt, process_file
+from utils import process_file, divide_file_and_process
 from psutil import virtual_memory
 
 
@@ -57,16 +57,20 @@ class MainWindow(QtWidgets.QWidget):
         mem = virtual_memory()
         file_path = os.path.realpath(self.filename)
         file_size = os.stat(file_path).st_size
+
         if file_size > mem.total:
             needs_segmentation = True
+
         key = self.key_editor.text()
         if len(key) > 32:
             return
+
         if needs_segmentation:
-            pass
+            divide_file_and_process(self.filename, key)
         else:
             process_file(self.filename, key)
-            self.status.setText("Processing Done")
+
+        self.status.setText("Processing Done")
 
     def retrieve_file(self):
         pass
