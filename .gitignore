@@ -133,3 +133,5 @@ dmypy.json
 
 # Temporary use
 ui/
+shards/
+temp/

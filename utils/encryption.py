@@ -7,13 +7,13 @@ from Crypto.Cipher import AES
 sixteen_mega_bytes = 16 * 1024 * 1024  # 16 MB
 
 
-def encrypt(filename, file_size, key):
+def encrypt(filename, file_size, key, to_file):
     key = hashlib.sha256(key.encode('utf-8')).digest()
     iv = ''.join([chr(random.randint(0, 0xFF)) for i in range(16)])
     iv = bytes(iv, encoding="raw_unicode_escape")
     aes_key = AES.new(key, AES.MODE_CBC, iv)
 
-    with open(filename+".enc", "wb") as encrypted_file:
+    with open(to_file, "wb") as encrypted_file:
         encrypted_file.write(struct.pack('<Q', file_size))
         encrypted_file.write(iv)
         with open(filename, "rb") as file:
