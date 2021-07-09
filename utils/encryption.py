@@ -24,7 +24,7 @@ def encrypt(filename, file_size, key, to_file):
                     break
                 elif n % 16 != 0:
                     data += b' ' * (16 - n % 16)  # <- padded with spaces
-                    print("chunk length:", n, len(data), len(data) % 16)
+                    print("debugging chunk length:", n, len(data), len(data) % 16)
                 encoded_data = aes_key.encrypt(data)
                 encrypted_file.write(encoded_data)
 

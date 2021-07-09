@@ -52,11 +52,10 @@ class MainWindow(QtWidgets.QWidget):
         self.logout_switch.emit()
 
     def start_processing(self):
-        needs_segmentation = False
-        mem = virtual_memory()
         file_path = os.path.realpath(self.filename)
         file_size = os.stat(file_path).st_size
-
+        needs_segmentation = False
+        mem = virtual_memory()
         if file_size > mem.total:
             needs_segmentation = True
 
@@ -67,7 +66,7 @@ class MainWindow(QtWidgets.QWidget):
         if needs_segmentation:
             divide_file_and_process(self.filename, key)
         else:
-            process_file(self.filename, key)
+            process_file(self.filename, key, 1)
 
         self.status.setText("Processing Done")
 
@@ -85,6 +84,7 @@ class MainWindow(QtWidgets.QWidget):
         if not self.filename:
             return
         self.start_processing()
+        print("Processing Done")
 
     def download(self):
         pass
