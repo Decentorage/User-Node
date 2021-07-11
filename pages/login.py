@@ -1,24 +1,18 @@
 from PyQt5 import QtCore, QtWidgets
+from controllers.worker import call_worker
+import time
 
 
 class Login(QtWidgets.QWidget):
 
     login_switch = QtCore.pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, ui):
         QtWidgets.QWidget.__init__(self)
         self.setWindowTitle('Login')
-
-        layout = QtWidgets.QGridLayout()
-
-        # Login button
-        self.login_button = QtWidgets.QPushButton('Login')
-        self.login_button.clicked.connect(self.login)
-
-        # Add components to layout
-        layout.addWidget(self.login_button)
-
-        self.setLayout(layout)
+        ui.login_pb.clicked.connect(lambda: call_worker(self.login, ui, ui.main_page, "Logging in.."))
 
     def login(self):
-        self.login_switch.emit()
+        time.sleep(10)
+        # print("HII")
+        # self.login_switch.emit()
