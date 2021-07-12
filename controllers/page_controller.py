@@ -1,7 +1,7 @@
 from PyQt5.QtCore import QThreadPool, pyqtSlot, QObject, pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
-from pages import Main, Login
+from pages import Main, Login, UploadMain, ContractDetails, ShowFiles
 from PyQt5 import QtWidgets
 from gui.ui import Ui_MainWindow
 
@@ -10,15 +10,20 @@ class PageController:
 
     def __init__(self):
         self.application_window = QtWidgets.QWidget()
+        self.application_window.setWindowTitle("Welcome to Decentorage")
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self.application_window)
         self.ui.stackedWidget.setCurrentWidget(self.ui.login_page)
         self.ui.thread_pool = QThreadPool()
         self.ui.worker_waiting = False
         self.ui.waiting_spinner.start()
+
         # Pages
         self.login = Login(self.ui)
         self.main = Main(self.ui)
+        self.upload_main = UploadMain(self.ui)
+        self.show_files = ShowFiles(self.ui)
+        self.contract_details = ContractDetails(self.ui)
 
         # Error page button
         self.ui.error_ok_pb.clicked.connect(lambda: return_from_error_page(self.ui))
@@ -26,9 +31,16 @@ class PageController:
         # Event handlers
         self.main.logout_switch.connect(self.switch_to_login)
         self.main.show_my_files_switch.connect(self.switch_show_files)
-        self.main.upload_switch.connect(self.switch_upload_main)
+        self.main.upload_files_switch.connect(self.switch_upload_main)
+        self.show_files.back_to_main_switch.connect(self.switch_to_main)
+        self.upload_main.back_to_main_switch.connect(self.switch_to_main)
 
+        # Show window
         self.application_window.show()
+
+    def switch_to_main(self):
+        self.application_window.setWindowTitle("Welcome to Decentorage")
+        self.ui.stackedWidget.setCurrentWidget(self.ui.main_page)
 
     def switch_to_login(self):
         self.application_window.setWindowTitle("Login")

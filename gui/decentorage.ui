@@ -19,7 +19,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>6</number>
+        <number>4</number>
        </property>
        <widget class="QWidget" name="loading_page">
         <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -176,13 +176,6 @@
             <widget class="QPushButton" name="contract_details_cancel_pb">
              <property name="text">
               <string>Cancel</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="contract_details_back_pb">
-             <property name="text">
-              <string>Back To Main</string>
              </property>
             </widget>
            </item>
@@ -383,7 +376,7 @@
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_32">
             <item>
-             <layout class="QVBoxLayout" name="verticalLayout_5" stretch="10,5,5,0">
+             <layout class="QVBoxLayout" name="verticalLayout_5" stretch="10,5,5,0,0">
               <item>
                <widget class="QListWidget" name="show_files_list_widget">
                 <property name="alternatingRowColors">
@@ -429,6 +422,13 @@
                 </property>
                 <property name="text">
                  <string>Download</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="show_files_back_pb">
+                <property name="text">
+                 <string>Back To Main</string>
                 </property>
                </widget>
               </item>
