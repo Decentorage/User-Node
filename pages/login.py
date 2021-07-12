@@ -10,8 +10,8 @@ class Login(QtWidgets.QWidget):
 
     def __init__(self, ui):
         QtWidgets.QWidget.__init__(self)
-        self.setWindowTitle('Login')
         self.ui = ui
+        # Connectors
         self.ui.login_pb.clicked.connect(lambda: call_worker(self.login, ui, ui.main_page, "Logging in.."))
 
     def login(self):

@@ -19,7 +19,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>6</number>
        </property>
        <widget class="QWidget" name="loading_page">
         <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -176,6 +176,13 @@
             <widget class="QPushButton" name="contract_details_cancel_pb">
              <property name="text">
               <string>Cancel</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="contract_details_back_pb">
+             <property name="text">
+              <string>Back To Main</string>
              </property>
             </widget>
            </item>
@@ -356,6 +363,13 @@
              </property>
             </spacer>
            </item>
+           <item>
+            <widget class="QPushButton" name="main_logout_pb">
+             <property name="text">
+              <string>Logout</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </item>
         </layout>
@@ -465,6 +479,13 @@
             <widget class="QPushButton" name="upload_main_refresh_pb">
              <property name="text">
               <string>Refresh</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="upload_main_back_pb">
+             <property name="text">
+              <string>Back To Main</string>
              </property>
             </widget>
            </item>
@@ -615,7 +636,7 @@
              <string/>
             </property>
             <property name="pixmap">
-             <pixmap resource="decentorage_logo.qrc">:/gui/decentorage.png</pixmap>
+             <pixmap>:/gui/decentorage.png</pixmap>
             </property>
             <property name="scaledContents">
              <bool>true</bool>
