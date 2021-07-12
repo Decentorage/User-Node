@@ -47,7 +47,7 @@ class Worker(QRunnable):
                     self.change_page_signal_emitter.change_page(self.ui.stackedWidget, self.target_page)
 
         except Exception as e:
-            worker_error_page("Error", str(e))
+            worker_error_page("Error", str(e), self.ui)
             if self.loading_screen_selected():
                 self.change_page_signal_emitter.change_page(self.ui.stackedWidget, self.current_page)
 
@@ -68,11 +68,11 @@ def worker_error_page(title, body, ui):
         def display_error(self):
             self.change_page_trigger.connect(ui.stackedWidget.setCurrentWidget)
             self.change_page_trigger.emit(ui.error_page)
-            self.change_title_trigger.connect(ui.error_tite.setText)
+            self.change_title_trigger.connect(ui.error_title.setText)
             self.change_title_trigger.emit(title)
             self.change_body_trigger.connect(ui.error_body.setText)
             self.change_body_trigger.emit(body)
-            self.adjust_title.connect(ui.error_tite.adjustSize)
+            self.adjust_title.connect(ui.error_title.adjustSize)
             self.adjust_title.emit()
             self.adjust_body.connect(ui.error_body.adjustSize)
             self.adjust_body.emit()

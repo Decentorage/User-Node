@@ -14,7 +14,9 @@ class Settings:
         self.encryption_directory = "encrypted"
         self.shard_filename = "shard"
         self.segment_filename = "segment"
-
+        self.cache_filename = "decentorage_cache"
+        self.host_url = "http://192.168.1.3:5000/"
+        self.client_url_prefix = 'user/'
         self.erasure_factor = 3
 
         self.segment_size = int(14 * gigabyte)                          # 14 GBs max segment size

@@ -1,4 +1,5 @@
-from PyQt5.QtCore import QThreadPool
+from PyQt5.QtCore import QThreadPool, pyqtSlot, QObject, pyqtSignal
+from PyQt5.QtWidgets import QWidget
 
 from pages import MainWindow, Login
 from PyQt5 import QtWidgets
@@ -18,13 +19,13 @@ class PageController:
         self.ui.setupUi(self.application_window)
         self.ui.stackedWidget.setCurrentWidget(self.ui.login_page)
         self.ui.thread_pool = QThreadPool()
+        self.ui.worker_waiting = False
         self.ui.waiting_spinner.start()
         # Pages
         self.login = Login(self.ui)
+        # Error page button
+        self.ui.error_ok_pb.clicked.connect(lambda: return_from_error_page(self.ui))
         # Add widgets
-        # Events handler
-        # self.login.login_switch.connect(self.switch_to_main)
-        # self.main_window.logout_switch.connect(self.switch_to_login)
 
         self.application_window.show()
 
@@ -32,6 +33,20 @@ class PageController:
         self.application_window.setWindowTitle("Welcome to Decentorage")
         self.ui.stackedWidget.setCurrentWidget(self.ui.main_page)
 
-    def switch_to_login(self):
-        self.application_window.setWindowTitle("Login")
-        self.ui.stackedWidget.setCurrentWidget(self.ui.login_page)
+
+@pyqtSlot(QWidget)
+def return_from_error_page(ui):
+    change_current_page(ui, ui.error_source_page)
+    ui.worker_waiting = False
+
+
+def change_current_page(ui, target_page):
+    class ChangePageSignalEmitter(QObject):
+        change_page_trigger = pyqtSignal(QWidget)
+
+        def change_page(self, stacked_widget, target):
+            self.change_page_trigger.connect(stacked_widget.setCurrentWidget)
+            self.change_page_trigger.emit(target)
+
+    change_page_signal_emitter = ChangePageSignalEmitter()
+    change_page_signal_emitter.change_page(ui.stackedWidget, target_page)
