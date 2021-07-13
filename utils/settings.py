@@ -6,6 +6,7 @@ gigabyte = megabyte * 1024
 
 
 class Settings:
+
     def __init__(self):
         # define directories used in workspace.
         self.shards_directory_path = os.path.realpath("shards")
@@ -18,11 +19,13 @@ class Settings:
         self.host_url = "http://192.168.1.3:5000/"
         self.client_url_prefix = 'user/'
         self.erasure_factor = 3
+        self.token = None
+        self.redirect_to_login = "redirect to login"
 
         self.segment_size = int(14 * gigabyte)                          # 14 GBs max segment size
         self.size = int(5 * megabyte)                                   # 5 MBs for test purposes
 
-        # create directories of not exist.
+        # create directories if not exist.
         if not os.path.exists(self.shards_directory_path):
             os.makedirs(self.shards_directory_path)
         if not os.path.exists(self.download_directory_path):
@@ -48,3 +51,27 @@ class Settings:
         files = glob.glob(os.path.realpath(self.encryption_directory) + '/*')
         for f in files:
             os.remove(f)
+
+    def is_user_logged_in(self):
+        """
+        check if there is any cached tokens.
+        :return: Boolean represents if the user is logged in or not.
+        """
+        try:
+            cached_file = open(self.cache_filename, 'r')
+            self.token = cached_file.read()
+            return True
+        except:  # No cached token
+            self.token = None
+            return False
+
+    def get_token(self):
+        """
+        return cached token.
+        :return: token or none if no token exits.
+        """
+        try:
+            cached_file = open(self.cache_filename, 'r')
+            self.token = cached_file.read()
+        except:
+            pass

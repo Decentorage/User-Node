@@ -8,7 +8,7 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     settings = Settings()
     settings.reset_directories()
-    page_controller = PageController()
+    page_controller = PageController(settings)
     sys.exit(app.exec_())
 
 

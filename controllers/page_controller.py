@@ -1,29 +1,34 @@
 from PyQt5.QtCore import QThreadPool, pyqtSlot, QObject, pyqtSignal
 from PyQt5.QtWidgets import QWidget
-
 from pages import Main, Login, UploadMain, ContractDetails, ShowFiles
 from PyQt5 import QtWidgets
 from gui.ui import Ui_MainWindow
+from .worker import call_worker
 
 
 class PageController:
 
-    def __init__(self):
+    def __init__(self, settings):
         self.application_window = QtWidgets.QWidget()
         self.application_window.setWindowTitle("Welcome to Decentorage")
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self.application_window)
-        self.ui.stackedWidget.setCurrentWidget(self.ui.login_page)
         self.ui.thread_pool = QThreadPool()
         self.ui.worker_waiting = False
         self.ui.waiting_spinner.start()
+        self.settings = settings
+
+        if self.settings.is_user_logged_in():
+            self.ui.stackedWidget.setCurrentWidget(self.ui.main_page)
+        else:
+            self.ui.stackedWidget.setCurrentWidget(self.ui.login_page)
 
         # Pages
-        self.login = Login(self.ui)
-        self.main = Main(self.ui)
-        self.upload_main = UploadMain(self.ui)
-        self.show_files = ShowFiles(self.ui)
-        self.contract_details = ContractDetails(self.ui)
+        self.login = Login(self.ui, self.settings)
+        self.main = Main(self.ui, self.settings)
+        self.upload_main = UploadMain(self.ui, self.settings)
+        self.show_files = ShowFiles(self.ui, self.settings)
+        self.contract_details = ContractDetails(self.ui, self.settings)
 
         # Error page button
         self.ui.error_ok_pb.clicked.connect(lambda: return_from_error_page(self.ui))
@@ -52,7 +57,7 @@ class PageController:
 
     def switch_show_files(self):
         self.application_window.setWindowTitle("My files")
-        self.ui.stackedWidget.setCurrentWidget(self.ui.show_files_page)
+        call_worker(self.show_files.show_user_files, self.ui, self.ui.show_files_page, "loading Files..")
 
 
 @pyqtSlot(QWidget)
