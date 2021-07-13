@@ -47,7 +47,7 @@ class ShowFiles(QtWidgets.QWidget):
 
     def check_download_conditions(self):
         self.key = self.ui.show_files_decryption_key_line_edit.text()
-        if (len(key) > 32) or (len(key) <= 0):
+        if (len(self.key) > 32) or (len(self.key) <= 0):
             self.ui.show_files_download_pb.setEnabled(False)
         else:
             if self.index:
