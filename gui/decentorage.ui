@@ -409,7 +409,7 @@
                 <item>
                  <widget class="QLineEdit" name="show_files_decryption_key_line_edit">
                   <property name="enabled">
-                   <bool>false</bool>
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>

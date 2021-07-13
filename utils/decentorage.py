@@ -1,6 +1,10 @@
 import requests
-from .settings import Settings
-settings = Settings()
+settings = None
+
+
+def init_decentorage(settings_obj):
+    global settings
+    settings = settings_obj
 
 
 def user_login(username, password):
@@ -12,16 +16,16 @@ def user_login(username, password):
     if response.status_code == 200:     # Login succeeded => save token
         result = response.json()
         token = result['token']
-        cache_file = open(settings.cache_filename, 'w')
+        cache_file = open(settings.cache_file, 'w')
         cache_file.write(token)
     else:  # Login failed
         raise Exception(response.text)
 
 
-def get_user_files(token):
+def get_user_files():
+    token = settings.token
     if token:
-        response = requests.get(settings.host_url + settings.client_url_prefix + 'getFiles'
-                                , headers={"token": token})
+        response = requests.get(settings.host_url + settings.client_url_prefix + 'getFiles', headers={"token": token})
         if response.status_code == 200:
             return response.json()
         else:

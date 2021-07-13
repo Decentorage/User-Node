@@ -185,7 +185,7 @@ class Ui_MainWindow(object):
         self.show_files_decryption_key_label.setObjectName("show_files_decryption_key_label")
         self.horizontalLayout_3.addWidget(self.show_files_decryption_key_label)
         self.show_files_decryption_key_line_edit = QtWidgets.QLineEdit(self.groupbox_showfiles)
-        self.show_files_decryption_key_line_edit.setEnabled(False)
+        self.show_files_decryption_key_line_edit.setEnabled(True)
         self.show_files_decryption_key_line_edit.setObjectName("show_files_decryption_key_line_edit")
         self.horizontalLayout_3.addWidget(self.show_files_decryption_key_line_edit)
         self.verticalLayout_5.addLayout(self.horizontalLayout_3)

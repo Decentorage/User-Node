@@ -4,6 +4,7 @@ from pages import Main, Login, UploadMain, ContractDetails, ShowFiles
 from PyQt5 import QtWidgets
 from gui.ui import Ui_MainWindow
 from .worker import call_worker
+import os
 
 
 class PageController:
@@ -38,6 +39,7 @@ class PageController:
         self.main.show_my_files_switch.connect(self.switch_show_files)
         self.main.upload_files_switch.connect(self.switch_upload_main)
         self.show_files.back_to_main_switch.connect(self.switch_to_main)
+        self.show_files.logout_switch.connect(self.switch_to_login)
         self.upload_main.back_to_main_switch.connect(self.switch_to_main)
 
         # Show window
@@ -49,6 +51,7 @@ class PageController:
 
     def switch_to_login(self):
         self.application_window.setWindowTitle("Login")
+        self.logout()
         self.ui.stackedWidget.setCurrentWidget(self.ui.login_page)
 
     def switch_upload_main(self):
@@ -58,6 +61,13 @@ class PageController:
     def switch_show_files(self):
         self.application_window.setWindowTitle("My files")
         call_worker(self.show_files.show_user_files, self.ui, self.ui.show_files_page, "loading Files..")
+
+    def logout(self):
+        try:
+            # Remove cached file
+            os.remove(self.settings.cache_filename)
+        except:
+            return
 
 
 @pyqtSlot(QWidget)

@@ -15,12 +15,12 @@ class Settings:
         self.encryption_directory = "encrypted"
         self.shard_filename = "shard"
         self.segment_filename = "segment"
-        self.cache_filename = "decentorage_cache"
+        self.cache_file = os.path.realpath("decentorage_cache")
         self.host_url = "http://192.168.1.3:5000/"
         self.client_url_prefix = 'user/'
+        self.redirect_to_login = "Redirect to login"
         self.erasure_factor = 3
         self.token = None
-        self.redirect_to_login = "redirect to login"
 
         self.segment_size = int(14 * gigabyte)                          # 14 GBs max segment size
         self.size = int(5 * megabyte)                                   # 5 MBs for test purposes
@@ -58,7 +58,7 @@ class Settings:
         :return: Boolean represents if the user is logged in or not.
         """
         try:
-            cached_file = open(self.cache_filename, 'r')
+            cached_file = open(self.cache_file, 'r')
             self.token = cached_file.read()
             return True
         except:  # No cached token
@@ -71,7 +71,7 @@ class Settings:
         :return: token or none if no token exits.
         """
         try:
-            cached_file = open(self.cache_filename, 'r')
+            cached_file = open(self.cache_file, 'r')
             self.token = cached_file.read()
         except:
             pass
