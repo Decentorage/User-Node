@@ -1,4 +1,5 @@
 from PyQt5 import QtCore, QtWidgets
+import time
 
 
 class UploadMain(QtWidgets.QWidget):
@@ -14,3 +15,9 @@ class UploadMain(QtWidgets.QWidget):
 
     def back_to_main(self):
         self.back_to_main_switch.emit()
+
+    def poll_status(self):
+        while self.ui.stackedWidget.currentWidget() == self.ui.upload_main_page:
+            time.sleep(self.settings.upload_polling_time)
+            print("Polling state")
+            # TODO: get state of the user

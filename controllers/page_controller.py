@@ -57,6 +57,7 @@ class PageController:
     def switch_upload_main(self):
         self.application_window.setWindowTitle("Upload main page")
         self.ui.stackedWidget.setCurrentWidget(self.ui.upload_main_page)
+        call_worker(self.upload_main.poll_status, self.ui)
 
     def switch_show_files(self):
         self.application_window.setWindowTitle("My files")
