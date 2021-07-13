@@ -20,6 +20,7 @@ class Settings:
         self.client_url_prefix = 'user/'
         self.redirect_to_login = "Redirect to login"
         self.erasure_factor = 3
+        self.audits_default_count = 100
         self.token = None
 
         self.segment_size = int(14 * gigabyte)                          # 14 GBs max segment size
