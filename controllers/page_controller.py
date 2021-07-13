@@ -13,6 +13,7 @@ class PageController:
         self.application_window = QtWidgets.QWidget()
         self.application_window.setWindowTitle("Welcome to Decentorage")
         self.ui = Ui_MainWindow()
+        self.ui.about_to_close = False
         self.ui.setupUi(self.application_window)
         self.ui.thread_pool = QThreadPool()
         self.ui.worker_waiting = False
@@ -32,7 +33,7 @@ class PageController:
         self.contract_details = ContractDetails(self.ui, self.settings)
 
         # Error page button
-        self.ui.error_ok_pb.clicked.connect(lambda: return_from_error_page(self.ui))
+        self.ui.error_ok_pb.clicked.connect(self.return_from_error_page)
 
         # Event handlers
         self.main.logout_switch.connect(self.switch_to_login)
@@ -57,11 +58,15 @@ class PageController:
     def switch_upload_main(self):
         self.application_window.setWindowTitle("Upload main page")
         self.ui.stackedWidget.setCurrentWidget(self.ui.upload_main_page)
-        call_worker(self.upload_main.poll_status, self.ui)
+        call_worker(self.upload_main.poll_state, self.ui)
 
     def switch_show_files(self):
         self.application_window.setWindowTitle("My files")
         call_worker(self.show_files.show_user_files, self.ui, self.ui.show_files_page, "loading Files..")
+
+    def switch_contract_details(self):
+        self.application_window.setWindowTitle("Set Contract Parameters")
+        self.ui.stackedWidget.setCurrentWidget(self.ui.contract_details_page)
 
     def logout(self):
         try:
@@ -70,20 +75,20 @@ class PageController:
         except:
             return
 
+    def cleanup(self):
+        self.ui.about_to_close = True
+        # os._exit(0)
 
-@pyqtSlot(QWidget)
-def return_from_error_page(ui):
-    change_current_page(ui, ui.error_source_page)
-    ui.worker_waiting = False
+    def return_from_error_page(self):
+        self.change_current_page(self.ui.error_source_page)
+        self.ui.worker_waiting = False
 
+    def change_current_page(self, target_page):
+        class ChangePageSignalEmitter(QObject):
+            change_page_trigger = pyqtSignal(QWidget)
 
-def change_current_page(ui, target_page):
-    class ChangePageSignalEmitter(QObject):
-        change_page_trigger = pyqtSignal(QWidget)
-
-        def change_page(self, stacked_widget, target):
-            self.change_page_trigger.connect(stacked_widget.setCurrentWidget)
-            self.change_page_trigger.emit(target)
-
-    change_page_signal_emitter = ChangePageSignalEmitter()
-    change_page_signal_emitter.change_page(ui.stackedWidget, target_page)
+            def change_page(self, stacked_widget, target):
+                self.change_page_trigger.connect(stacked_widget.setCurrentWidget)
+                self.change_page_trigger.emit(target)
+        change_page_signal_emitter = ChangePageSignalEmitter()
+        change_page_signal_emitter.change_page(self.ui.stackedWidget, target_page)

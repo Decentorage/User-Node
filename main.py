@@ -10,6 +10,7 @@ def main():
     settings.reset_directories()
     init_decentorage(settings)
     page_controller = PageController(settings)
+    app.aboutToQuit.connect(page_controller.cleanup)
     sys.exit(app.exec_())
 
 

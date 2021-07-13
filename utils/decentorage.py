@@ -32,3 +32,15 @@ def get_user_files():
             return settings.redirect_to_login
     else:  # Get user files.
         return settings.redirect_to_login
+
+
+def get_user_state():
+    token = settings.token
+    if token:
+        response = requests.get(settings.host_url + settings.client_url_prefix + 'getState', headers={"token": token})
+        if response.status_code == 200:
+            return response.json()['state']
+        else:
+            return settings.redirect_to_login
+    else:  # Get user files.
+        return settings.redirect_to_login

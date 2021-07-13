@@ -22,6 +22,12 @@ class Settings:
         self.erasure_factor = 3
         self.audits_default_count = 100
         self.upload_polling_time = 10
+        self.state_upload_file = '1'
+        self.state_upload_file_text = "Congratulations !, You can upload your file now"
+        self.state_initiate_contract_instance = '2'
+        self.state_initiate_contract_instance_text = "You have a pending contract, you can choose a file to upload now"
+        self.state_recharge = '3'
+        self.state_recharge_text = "You have to request a contract before you can decentore your files"
         self.token = None
 
         self.segment_size = int(14 * gigabyte)                          # 14 GBs max segment size

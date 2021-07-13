@@ -209,6 +209,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_11 = QtWidgets.QVBoxLayout()
         self.verticalLayout_11.setObjectName("verticalLayout_11")
         self.upload_main_status_label = QtWidgets.QLabel(self.upload_main_page)
+        self.upload_main_status_label.setText("")
         self.upload_main_status_label.setObjectName("upload_main_status_label")
         self.verticalLayout_11.addWidget(self.upload_main_status_label)
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
@@ -223,9 +224,6 @@ class Ui_MainWindow(object):
         self.upload_main_start_uploading_pb = QtWidgets.QPushButton(self.upload_main_page)
         self.upload_main_start_uploading_pb.setObjectName("upload_main_start_uploading_pb")
         self.verticalLayout_11.addWidget(self.upload_main_start_uploading_pb)
-        self.upload_main_refresh_pb = QtWidgets.QPushButton(self.upload_main_page)
-        self.upload_main_refresh_pb.setObjectName("upload_main_refresh_pb")
-        self.verticalLayout_11.addWidget(self.upload_main_refresh_pb)
         self.upload_main_back_pb = QtWidgets.QPushButton(self.upload_main_page)
         self.upload_main_back_pb.setObjectName("upload_main_back_pb")
         self.verticalLayout_11.addWidget(self.upload_main_back_pb)
@@ -326,7 +324,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_17.addLayout(self.verticalLayout)
 
         self.retranslateUi(MainWindow)
-        self.stackedWidget.setCurrentIndex(4)
+        self.stackedWidget.setCurrentIndex(6)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -350,11 +348,9 @@ class Ui_MainWindow(object):
         self.show_files_decryption_key_label.setText(_translate("MainWindow", "Decryption key"))
         self.show_files_download_pb.setText(_translate("MainWindow", "Download"))
         self.show_files_back_pb.setText(_translate("MainWindow", "Back To Main"))
-        self.upload_main_status_label.setText(_translate("MainWindow", "TextLabel"))
         self.upload_main_request_contract_pb.setText(_translate("MainWindow", "Request Contract Instance"))
         self.upload_main_initiate_contract_pb.setText(_translate("MainWindow", "Initiate Contract Instance"))
         self.upload_main_start_uploading_pb.setText(_translate("MainWindow", "Start Uploading"))
-        self.upload_main_refresh_pb.setText(_translate("MainWindow", "Refresh"))
         self.upload_main_back_pb.setText(_translate("MainWindow", "Back To Main"))
         self.login_information_label.setText(_translate("MainWindow", "Please log in to your Decentorage account"))
         self.login_username_label.setText(_translate("MainWindow", "Username"))
