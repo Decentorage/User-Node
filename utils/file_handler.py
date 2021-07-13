@@ -36,10 +36,10 @@ def divide_file_and_process(from_file, key, chunk_size=settings.size):
     segment_num = 0
     input_file = open(file_path, 'rb')
     while 1:
-        segment_num = segment_num + 1
         chunk = input_file.read(chunk_size)         # get next part <= chunk size
         if not chunk:                               # eof=empty string from read
             break
+        segment_num = segment_num + 1
         file_segment_path = settings.segments_directory_path + '/' + str(segment_num) + '_' + filename
         file_segment = open(file_segment_path, 'wb')
         file_segment.write(chunk)
@@ -48,20 +48,30 @@ def divide_file_and_process(from_file, key, chunk_size=settings.size):
     input_file.close()
 
 
-def retrieve_original_file(from_dir, to_file, key, file_segmented, read_size=settings.size):
-    if file_segmented:
-        segments_count = 1
-        while segments_count < 5:  # 5 should be replaced with segments total count
-            decode(settings.shards_directory_path, from_dir, segments_count, 7)
-            segments_count += 1
+def retrieve_original_file(key, file_metadata, read_size=settings.size):
+    """
+    this function retrieve the file by decoding and decrypting different segments. Then combine segments into one file
+    :param key: decryption key
+    :param file_metadata: file metadata dictionary contain data needed to retrieve file
+    :param read_size: segment size
+    """
+    if file_metadata['segments_count'] > 1:
+        segment_num = 1
+        while segment_num <= file_metadata['segments_count']:
+            segment_name = settings.segment_filename + '_' + str(segment_num)
+            decode(settings.shards_directory_path, settings.segments_directory_path, segment_num, file_metadata['k'])
+            decrypt(key, segment_name, segment_name + ".enc")
+            segment_num += 1
     else:
-        decode(settings.shards_directory_path, from_dir, 1, 7)
+        segment_name = settings.segment_filename + '_1'
+        decode(settings.shards_directory_path, settings.segments_directory_path, 1, file_metadata['k'])
+        decrypt(key, segment_name, segment_name + ".enc")
 
-    output = open(to_file, 'wb')
-    parts = os.listdir(from_dir)
+    output = open(file_metadata['filename'], 'wb')
+    parts = os.listdir(settings.segments_directory_path)
     parts.sort()
     for filename in parts:
-        file_path = os.path.join(from_dir, filename)
+        file_path = os.path.join(settings.segments_directory_path, filename)
         file_obj = open(file_path, 'rb')
         while 1:
             file_bytes = file_obj.read(read_size)
@@ -70,7 +80,4 @@ def retrieve_original_file(from_dir, to_file, key, file_segmented, read_size=set
             output.write(file_bytes)
         file_obj.close()
     output.close()
-
-    print("Erasure coding decode !!")
-    decrypt(key, to_file, "out.mp4")
-    print("Decrypting Done!")
+    print("Done retrieving file")

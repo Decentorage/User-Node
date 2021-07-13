@@ -33,7 +33,7 @@ def decrypt(key, in_filename, out_filename=None):
     if not out_filename:
         out_filename = os.path.splitext(in_filename)[0]
     key = hashlib.sha256(key.encode('utf-8')).digest()
-    print(key, in_filename, out_filename, sixteen_mega_bytes)
+    print("Decrypt: ", key, in_filename, out_filename, sixteen_mega_bytes)
     with open(in_filename, 'rb') as infile:
         original_size = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
         iv = infile.read(16)

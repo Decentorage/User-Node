@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QListWidgetItem
-from utils import get_user_files
+from utils import get_user_files, retrieve_original_file
 
 
 class ShowFiles(QtWidgets.QWidget):
@@ -15,6 +15,8 @@ class ShowFiles(QtWidgets.QWidget):
         self.settings = settings
         self.index = None
         self.files = None
+        self.key = None
+
         # Connectors
         self.ui.show_files_back_pb.clicked.connect(self.back_to_main)
         self.ui.show_files_decryption_key_line_edit.textChanged[str].connect(self.check_download_conditions)
@@ -44,7 +46,7 @@ class ShowFiles(QtWidgets.QWidget):
                             , list_widget)
 
     def check_download_conditions(self):
-        key = self.ui.show_files_decryption_key_line_edit.text()
+        self.key = self.ui.show_files_decryption_key_line_edit.text()
         if (len(key) > 32) or (len(key) <= 0):
             self.ui.show_files_download_pb.setEnabled(False)
         else:
@@ -56,3 +58,9 @@ class ShowFiles(QtWidgets.QWidget):
 
     def download(self):
         print("downloading", self.index, self.files[self.index]['filename'])
+        # Sequence download shard for all file segments in download directory then decode and decrypt.
+        # TODO: Download
+
+        file_metadata = {}
+        # After files have been downloaded => decode and decrypt.
+        retrieve_original_file(self.key, file_metadata)

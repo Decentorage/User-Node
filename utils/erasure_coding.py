@@ -32,7 +32,6 @@ def decode(shards_directory, retrieved_segments_directory, segment_number, k):
     shards = []
     shards_info = []
     shard_name = settings.shard_filename + '_' + str(segment_number)
-    k = k
     for filename in os.listdir(shards_directory):
         if filename.startswith(shard_name):
             shards.append(open(os.path.realpath(shards_directory+"/"+filename), 'rb'))
@@ -41,6 +40,6 @@ def decode(shards_directory, retrieved_segments_directory, segment_number, k):
                 break
             i += 1
     segment_name = settings.segment_filename + '_' + str(segment_number)
-    print(shards_info)
+    print("Shards information: ", shards_info)
     segment_path = os.path.realpath(retrieved_segments_directory+"/"+segment_name)
     filefec.decode_from_files(open(segment_path, 'wb'), shards, verbose=False)
