@@ -2,6 +2,7 @@ import os
 from .erasure_coding import encode, decode
 from .encryption import encrypt, decrypt
 from .settings import Settings
+from .file_transfer_user import send_data, add_connection
 settings = Settings()
 
 
@@ -10,17 +11,31 @@ def process_file(from_file, key, segment_number):
     settings.reset_directories()
 
     # Encryption
-    filename = from_file.split("/")[-1]
-    file_path = os.path.realpath(from_file)
-    file_size = os.stat(file_path).st_size
+    filename = os.path.basename(from_file)
+    file_size = os.stat(from_file).st_size
     encrypted_file_path = settings.get_encryption_file_path(filename)
-    encrypt(file_path, file_size, key, encrypted_file_path)
+    encrypt(from_file, file_size, key, encrypted_file_path)
 
     # Erasure coding
     file_size = os.stat(encrypted_file_path).st_size
     input_file = open(from_file, 'rb')
     file_obj = input_file.read()
     encode(file_obj, file_size, settings.shards_directory_path, segment_number)
+
+    # Upload Shards
+    shards = os.listdir(settings.shards_directory_path)
+    for shard in shards:
+        # TODO: Get parameters data
+        ip = "192.168.1.7"
+        req = {'type': 'upload',
+               'port': int(5000),
+               'shard_id': 'test1233',
+               'auth': 'test1233'
+               }
+        add_connection(req)
+        send_data(req, ip, True)
+        print(shard, " Sent !!")
+
     input_file.close()
 
 
@@ -81,3 +96,9 @@ def retrieve_original_file(key, file_metadata, read_size=settings.size):
         file_obj.close()
     output.close()
     print("Done retrieving file")
+
+
+def download_shards_and_retrieve(key, file_metadata, read_size=settings.size):
+    # TODO: shards to be downloaded
+
+    retrieve_original_file(key, file_metadata, read_size=settings.size)

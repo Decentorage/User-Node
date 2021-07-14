@@ -16,7 +16,8 @@ class Settings:
         self.encryption_directory = "encrypted"
         self.shard_filename = "shard"
         self.segment_filename = "segment"
-        self.cache_file = os.path.realpath("decentorage_cache")
+        self.cache_file = os.path.realpath("data/decentorage_cache")
+        self.upload_connection_file = os.path.realpath("data/connections.text")
         self.host_url = "http://192.168.1.3:5000/"
         self.client_url_prefix = 'user/'
         self.redirect_to_login = "Redirect to login"

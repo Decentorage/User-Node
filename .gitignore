@@ -138,5 +138,5 @@ temp/
 encrypted/
 download/
 segments/
-decentorage_cache
+data/
 test.py
