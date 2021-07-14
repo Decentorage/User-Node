@@ -1,4 +1,5 @@
-from PyQt5.QtCore import QThreadPool, pyqtSlot, QObject, pyqtSignal
+from PyQt5.QtCore import QThreadPool, QObject, pyqtSignal
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget
 from pages import Main, Login, UploadMain, ContractDetails, ShowFiles
 from PyQt5 import QtWidgets
@@ -11,10 +12,11 @@ class PageController:
 
     def __init__(self, settings):
         self.application_window = QtWidgets.QWidget()
-        self.application_window.setWindowTitle("Welcome to Decentorage")
+        self.application_window.setWindowIcon(QIcon(settings.icon_path))
         self.ui = Ui_MainWindow()
         self.ui.about_to_close = False
         self.ui.setupUi(self.application_window)
+        self.application_window.setWindowTitle("Decentorage Client Application")
         self.ui.thread_pool = QThreadPool()
         self.ui.worker_waiting = False
         self.ui.waiting_spinner.start()
@@ -42,31 +44,29 @@ class PageController:
         self.show_files.back_to_main_switch.connect(self.switch_to_main)
         self.show_files.logout_switch.connect(self.switch_to_login)
         self.upload_main.back_to_main_switch.connect(self.switch_to_main)
+        self.upload_main.contract_details_switch.connect(self.switch_contract_details)
+        self.contract_details.cancel_contract_details_switch.connect(self.switch_upload_main)
 
         # Show window
         self.application_window.show()
 
     def switch_to_main(self):
-        self.application_window.setWindowTitle("Welcome to Decentorage")
         self.ui.stackedWidget.setCurrentWidget(self.ui.main_page)
 
     def switch_to_login(self):
-        self.application_window.setWindowTitle("Login")
         self.logout()
         self.ui.stackedWidget.setCurrentWidget(self.ui.login_page)
 
     def switch_upload_main(self):
-        self.application_window.setWindowTitle("Upload main page")
         self.ui.stackedWidget.setCurrentWidget(self.ui.upload_main_page)
         call_worker(self.upload_main.poll_state, self.ui)
 
     def switch_show_files(self):
-        self.application_window.setWindowTitle("My files")
         call_worker(self.show_files.show_user_files, self.ui, self.ui.show_files_page, "loading Files..")
 
-    def switch_contract_details(self):
-        self.application_window.setWindowTitle("Set Contract Parameters")
-        self.ui.stackedWidget.setCurrentWidget(self.ui.contract_details_page)
+    def switch_contract_details(self, file_path):
+        call_worker(lambda: self.contract_details.load_file_details(file_path), self.ui,
+                    self.ui.contract_details_page, "loading File details..")
 
     def logout(self):
         try:

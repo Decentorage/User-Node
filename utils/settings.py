@@ -1,17 +1,18 @@
 import os
 import glob
-kilobyte = 1024
-megabyte = kilobyte * 1024
-gigabyte = megabyte * 1024
 
 
 class Settings:
+    kilobyte = 1024
+    megabyte = kilobyte * 1024
+    gigabyte = megabyte * 1024
 
     def __init__(self):
         # define directories used in workspace.
         self.shards_directory_path = os.path.realpath("shards")
         self.download_directory_path = os.path.realpath("download")
         self.segments_directory_path = os.path.realpath("segments")
+        self.icon_path = os.path.realpath("gui/resources/decentorage_icon.png")
         self.encryption_directory = "encrypted"
         self.shard_filename = "shard"
         self.segment_filename = "segment"
@@ -19,19 +20,20 @@ class Settings:
         self.host_url = "http://192.168.1.3:5000/"
         self.client_url_prefix = 'user/'
         self.redirect_to_login = "Redirect to login"
+        self.server_not_responding = "Check your internet connection"
         self.erasure_factor = 3
         self.audits_default_count = 100
         self.upload_polling_time = 10
         self.state_upload_file = '1'
-        self.state_upload_file_text = "Congratulations !, You can upload your file now"
+        self.state_upload_file_text = "Please start your upload"
         self.state_initiate_contract_instance = '2'
-        self.state_initiate_contract_instance_text = "You have a pending contract, you can choose a file to upload now"
+        self.state_initiate_contract_instance_text = "You have a pending contract, please select a file to upload"
         self.state_recharge = '3'
-        self.state_recharge_text = "You have to request a contract before you can decentore your files"
+        self.state_recharge_text = "You have to request a contract before you can select a file to upload"
         self.token = None
 
-        self.segment_size = int(14 * gigabyte)                          # 14 GBs max segment size
-        self.size = int(5 * megabyte)                                   # 5 MBs for test purposes
+        self.segment_size = int(14 * self.gigabyte)                          # 14 GBs max segment size
+        self.size = int(5 * self.megabyte)                                   # 5 MBs for test purposes
 
         # create directories if not exist.
         if not os.path.exists(self.shards_directory_path):

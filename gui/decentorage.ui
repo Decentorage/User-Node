@@ -19,7 +19,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>6</number>
+        <number>5</number>
        </property>
        <widget class="QWidget" name="loading_page">
         <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -112,7 +112,7 @@
            <item>
             <widget class="QLabel" name="contract_details_price_label">
              <property name="text">
-              <string>TextLabel</string>
+              <string>Calculating</string>
              </property>
             </widget>
            </item>
@@ -442,7 +442,7 @@
        <widget class="QWidget" name="upload_main_page">
         <layout class="QVBoxLayout" name="verticalLayout_12">
          <item>
-          <layout class="QVBoxLayout" name="verticalLayout_11">
+          <layout class="QVBoxLayout" name="verticalLayout_11" stretch="0,0,0,0">
            <item>
             <widget class="QLabel" name="upload_main_status_label">
              <property name="text">
@@ -455,14 +455,17 @@
              <item>
               <widget class="QPushButton" name="upload_main_request_contract_pb">
                <property name="text">
-                <string>Request Contract Instance</string>
+                <string>Request Contract</string>
                </property>
               </widget>
              </item>
              <item>
               <widget class="QPushButton" name="upload_main_initiate_contract_pb">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="text">
-                <string>Initiate Contract Instance</string>
+                <string>Select a file to upload</string>
                </property>
               </widget>
              </item>
@@ -470,6 +473,9 @@
            </item>
            <item>
             <widget class="QPushButton" name="upload_main_start_uploading_pb">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="text">
               <string>Start Uploading</string>
              </property>
@@ -478,7 +484,7 @@
            <item>
             <widget class="QPushButton" name="upload_main_back_pb">
              <property name="text">
-              <string>Back To Main</string>
+              <string>Back to Main</string>
              </property>
             </widget>
            </item>
