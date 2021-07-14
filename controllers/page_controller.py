@@ -71,7 +71,7 @@ class PageController:
     def logout(self):
         try:
             # Remove cached file
-            os.remove(self.settings.cache_filename)
+            os.remove(self.settings.cache_file)
         except:
             return
 
