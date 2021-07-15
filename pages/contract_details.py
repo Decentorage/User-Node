@@ -1,7 +1,6 @@
-import random
 from PyQt5 import QtCore, QtWidgets
 import os
-from utils import create_file
+from utils import create_file, get_price
 
 
 class ContractDetails(QtWidgets.QWidget):
@@ -17,6 +16,8 @@ class ContractDetails(QtWidgets.QWidget):
         # Connectors
         self.ui.contract_details_cancel_pb.clicked.connect(self.cancel_contract_details)
         self.ui.contract_details_request_pb.clicked.connect(self.request_contract)
+        self.ui.contract_details_download_counts_spin_box.valueChanged.connect(self.calculate_price)
+        self.ui.contract_details_months_spin_box.valueChanged.connect(self.calculate_price)
 
     def cancel_contract_details(self):
         self.cancel_contract_details_switch.emit()
@@ -35,7 +36,9 @@ class ContractDetails(QtWidgets.QWidget):
 
     def calculate_price(self):
         # TODO: Get price from decentorage.
-        price = random.randint(0, 1000)
+        self.contract_details['download_count'] = self.ui.contract_details_download_counts_spin_box.value()
+        self.contract_details['duration_in_months'] = self.ui.contract_details_months_spin_box.value()
+        price = get_price(self.contract_details)
         self.ui.contract_details_price_label.setText("Price:" + str(price))
 
     def request_contract(self):

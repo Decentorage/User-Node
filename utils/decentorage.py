@@ -7,6 +7,8 @@ def init_decentorage(settings_obj):
     global settings
     settings = settings_obj
 
+# TODO: implement login redirect
+
 
 def user_login(username, password):
     try:
@@ -24,6 +26,27 @@ def user_login(username, password):
         cache_file.write(token)
     else:  # Login failed
         raise Exception(response.text)
+
+
+def get_price(contract_details):
+    try:
+        token = settings.token
+        if token:
+            response = requests.get(settings.host_url + settings.client_url_prefix + 'getPrice',
+                                    params={
+                                        "download_count": contract_details['download_count'],
+                                        "duration_in_months": contract_details['duration_in_months'],
+                                        "file_size": contract_details['file_size']
+                                    },
+                                    headers={"token": token})
+            if response.status_code == 200:
+                return response.json()['price']
+            else:
+                return settings.redirect_to_login
+        else:  # Get user files.
+            return settings.redirect_to_login
+    except:
+        raise Exception(settings.server_not_responding)
 
 
 def get_user_files():
