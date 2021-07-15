@@ -1,4 +1,5 @@
 import requests
+import json
 settings = None
 
 
@@ -14,15 +15,15 @@ def user_login(username, password):
                                      'username': username,
                                      'password': password
                                  })
-        if response.status_code == 200:  # Login succeeded => save token
-            result = response.json()
-            token = result['token']
-            cache_file = open(settings.cache_file, 'w')
-            cache_file.write(token)
-        else:  # Login failed
-            raise Exception(response.text)
     except:
         raise Exception(settings.server_not_responding)
+    if response.status_code == 200:  # Login succeeded => save token
+        result = response.json()
+        token = result['token']
+        cache_file = open(settings.cache_file, 'w')
+        cache_file.write(token)
+    else:  # Login failed
+        raise Exception(response.text)
 
 
 def get_user_files():
@@ -57,20 +58,13 @@ def get_user_state():
         raise Exception(settings.server_not_responding)
 
 
-def create_contract(contract_details):
+def create_file(contract_details):
     try:
         token = settings.token
         if token:
-            response = requests.post(settings.host_url + settings.client_url_prefix + 'createContract',
+            response = requests.post(settings.host_url + settings.client_url_prefix + 'createFile',
                                      headers={"token": token},
-                                     json={
-                                         'filename': contract_details['filename'],
-                                         'download_counts': contract_details['download_counts'],
-                                         'file_size': contract_details['file_size'],
-                                         'duration': contract_details['duration'],
-                                         'segments_count': contract_details['segments_count'],
-                                         'segment': contract_details['segment']
-                                     })
+                                     json=json.dumps(contract_details))
             if response.status_code == 200:
                 return True
             else:
@@ -79,3 +73,5 @@ def create_contract(contract_details):
             return settings.redirect_to_login
     except:
         raise Exception(settings.server_not_responding)
+
+# TODO: Get price

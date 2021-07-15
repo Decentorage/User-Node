@@ -1,5 +1,6 @@
 import os
 import glob
+import math
 
 
 class Settings:
@@ -23,6 +24,7 @@ class Settings:
         self.redirect_to_login = "Redirect to login"
         self.server_not_responding = "Check your internet connection"
         self.erasure_factor = 3
+        self.minimum_data_shard = 4
         self.audits_default_count = 100
         self.upload_polling_time = 10
         self.state_upload_file = '1'
@@ -33,8 +35,8 @@ class Settings:
         self.state_recharge_text = "You have to request a contract before you can select a file to upload"
         self.token = None
 
-        self.segment_size = int(14 * self.gigabyte)                          # 14 GBs max segment size
-        self.size = int(5 * self.megabyte)                                   # 5 MBs for test purposes
+        # self.segment_size = int(14 * self.gigabyte)                                   # 14 GBs max segment size
+        self.segment_size = int(16 * self.megabyte)                                   # 5 MBs for test purposes
 
         # create directories if not exist.
         if not os.path.exists(self.shards_directory_path):
@@ -86,3 +88,26 @@ class Settings:
             self.token = cached_file.read()
         except:
             pass
+
+    def get_erasure_coding_parameters(self, file_size):
+        file_size = file_size / 1024.0  # KB
+        shard_size = 8  # KB
+        while file_size / shard_size > self.minimum_data_shard:
+            shard_size = shard_size * 2
+
+        k = math.ceil(file_size / shard_size)  # number of data shards
+        m = self.erasure_factor + k
+        return k, m
+
+    def get_file_metadata(self, file_size):
+        file_metadata = {'segments': [], 'segments_count': math.ceil(int(file_size) / self.segment_size)}
+        for segment_index in range(file_metadata['segments_count'] - 1):
+            k, m = self.get_erasure_coding_parameters(self.segment_size)
+            segment = {'k': k, 'm': m, 'shard_size': math.ceil(self.segment_size/k)}
+            file_metadata['segments'].append(segment)
+        k, m = self.get_erasure_coding_parameters(file_size -
+                                                  self.segment_size*(file_metadata['segments_count'] - 1))
+        segment = {'k': k, 'm': m, 'shard_size': math.ceil(math.ceil(file_size -
+                                                                     self.segment_size*(file_metadata['segments_count'] - 1))/k)}
+        file_metadata['segments'].append(segment)
+        return file_metadata['segments'], file_metadata['segments_count']

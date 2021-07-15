@@ -7,7 +7,6 @@ from utils import Settings, init_decentorage, init_file_transfer_user
 def main():
     app = QtWidgets.QApplication(sys.argv)
     settings = Settings()
-    settings.reset_directories()
     init_decentorage(settings)
     init_file_transfer_user(settings)
     page_controller = PageController(settings)

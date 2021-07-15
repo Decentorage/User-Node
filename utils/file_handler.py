@@ -8,7 +8,7 @@ settings = Settings()
 
 def process_file(from_file, key, segment_number):
     # Reset
-    settings.reset_directories()
+    # settings.reset_directories()
 
     # Encryption
     filename = os.path.basename(from_file)
@@ -32,38 +32,37 @@ def process_file(from_file, key, segment_number):
                'shard_id': 'test1233',
                'auth': 'test1233'
                }
-        add_connection(req)
-        send_data(req, ip, True)
-        print(shard, " Sent !!")
+        # add_connection(req)
+        # send_data(req, ip, True)
+        # print(shard, " Sent !!")
 
     input_file.close()
 
 
-def divide_file_and_process(from_file, key, chunk_size=settings.size):
+def divide_file_and_process(from_file, key, chunk_size=settings.segment_size):
     """
     This function divides the file into segments to process each segment separately
     :param from_file: input file that will be uploaded
     :param key: encryption key
     :param chunk_size: segment size
     """
-    file_path = os.path.realpath(from_file)
-    filename = from_file.split('/')[-1]
+    filename = os.path.basename(from_file)
     segment_num = 0
-    input_file = open(file_path, 'rb')
+    input_file = open(from_file, 'rb')
     while 1:
         chunk = input_file.read(chunk_size)         # get next part <= chunk size
         if not chunk:                               # eof=empty string from read
             break
-        segment_num = segment_num + 1
         file_segment_path = settings.segments_directory_path + '/' + str(segment_num) + '_' + filename
         file_segment = open(file_segment_path, 'wb')
         file_segment.write(chunk)
         process_file(file_segment_path, key, segment_num)
+        segment_num = segment_num + 1
         file_segment.close()
     input_file.close()
 
 
-def retrieve_original_file(key, file_metadata, read_size=settings.size):
+def retrieve_original_file(key, file_metadata, read_size=settings.segment_size):
     """
     this function retrieve the file by decoding and decrypting different segments. Then combine segments into one file
     :param key: decryption key
@@ -71,15 +70,15 @@ def retrieve_original_file(key, file_metadata, read_size=settings.size):
     :param read_size: segment size
     """
     if file_metadata['segments_count'] > 1:
-        segment_num = 1
-        while segment_num <= file_metadata['segments_count']:
+        segment_num = 0
+        while segment_num < file_metadata['segments_count']:
             segment_name = settings.segment_filename + '_' + str(segment_num)
             decode(settings.shards_directory_path, settings.segments_directory_path, segment_num, file_metadata['k'])
             decrypt(key, segment_name, segment_name + ".enc")
             segment_num += 1
     else:
-        segment_name = settings.segment_filename + '_1'
-        decode(settings.shards_directory_path, settings.segments_directory_path, 1, file_metadata['k'])
+        segment_name = settings.segment_filename + '_0'
+        decode(settings.shards_directory_path, settings.segments_directory_path, 0, file_metadata['k'])
         decrypt(key, segment_name, segment_name + ".enc")
 
     output = open(file_metadata['filename'], 'wb')
@@ -98,7 +97,7 @@ def retrieve_original_file(key, file_metadata, read_size=settings.size):
     print("Done retrieving file")
 
 
-def download_shards_and_retrieve(key, file_metadata, read_size=settings.size):
+def download_shards_and_retrieve(key, file_metadata, read_size=settings.segment_size):
     # TODO: shards to be downloaded
 
-    retrieve_original_file(key, file_metadata, read_size=settings.size)
+    retrieve_original_file(key, file_metadata, read_size=settings.segment_size)
