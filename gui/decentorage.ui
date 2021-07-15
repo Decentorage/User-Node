@@ -19,7 +19,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>5</number>
+        <number>6</number>
        </property>
        <widget class="QWidget" name="loading_page">
         <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -442,7 +442,7 @@
        <widget class="QWidget" name="upload_main_page">
         <layout class="QVBoxLayout" name="verticalLayout_12">
          <item>
-          <layout class="QVBoxLayout" name="verticalLayout_11" stretch="0,0,0,0">
+          <layout class="QVBoxLayout" name="verticalLayout_11" stretch="0,0,0,0,0">
            <item>
             <widget class="QLabel" name="upload_main_status_label">
              <property name="text">
@@ -466,6 +466,24 @@
                </property>
                <property name="text">
                 <string>Select a file to upload</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_9">
+             <item>
+              <widget class="QLabel" name="upload_main_encryption_key_label">
+               <property name="text">
+                <string>Encryption Key</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="upload_main_encryption_key_line_edit">
+               <property name="enabled">
+                <bool>false</bool>
                </property>
               </widget>
              </item>

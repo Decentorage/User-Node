@@ -222,6 +222,16 @@ class Ui_MainWindow(object):
         self.upload_main_initiate_contract_pb.setObjectName("upload_main_initiate_contract_pb")
         self.horizontalLayout_4.addWidget(self.upload_main_initiate_contract_pb)
         self.verticalLayout_11.addLayout(self.horizontalLayout_4)
+        self.horizontalLayout_9 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_9.setObjectName("horizontalLayout_9")
+        self.upload_main_encryption_key_label = QtWidgets.QLabel(self.upload_main_page)
+        self.upload_main_encryption_key_label.setObjectName("upload_main_encryption_key_label")
+        self.horizontalLayout_9.addWidget(self.upload_main_encryption_key_label)
+        self.upload_main_encryption_key_line_edit = QtWidgets.QLineEdit(self.upload_main_page)
+        self.upload_main_encryption_key_line_edit.setEnabled(False)
+        self.upload_main_encryption_key_line_edit.setObjectName("upload_main_encryption_key_line_edit")
+        self.horizontalLayout_9.addWidget(self.upload_main_encryption_key_line_edit)
+        self.verticalLayout_11.addLayout(self.horizontalLayout_9)
         self.upload_main_start_uploading_pb = QtWidgets.QPushButton(self.upload_main_page)
         self.upload_main_start_uploading_pb.setEnabled(False)
         self.upload_main_start_uploading_pb.setObjectName("upload_main_start_uploading_pb")
@@ -326,7 +336,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_17.addLayout(self.verticalLayout)
 
         self.retranslateUi(MainWindow)
-        self.stackedWidget.setCurrentIndex(5)
+        self.stackedWidget.setCurrentIndex(6)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -352,6 +362,7 @@ class Ui_MainWindow(object):
         self.show_files_back_pb.setText(_translate("MainWindow", "Back To Main"))
         self.upload_main_request_contract_pb.setText(_translate("MainWindow", "Request Contract"))
         self.upload_main_initiate_contract_pb.setText(_translate("MainWindow", "Select a file to upload"))
+        self.upload_main_encryption_key_label.setText(_translate("MainWindow", "Encryption Key"))
         self.upload_main_start_uploading_pb.setText(_translate("MainWindow", "Start Uploading"))
         self.upload_main_back_pb.setText(_translate("MainWindow", "Back to Main"))
         self.login_information_label.setText(_translate("MainWindow", "Please log in to your Decentorage account"))
