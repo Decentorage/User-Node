@@ -107,7 +107,7 @@ class Settings:
             file_metadata['segments'].append(segment)
         k, m = self.get_erasure_coding_parameters(file_size -
                                                   self.segment_size*(file_metadata['segments_count'] - 1))
-        segment = {'k': k, 'm': m, 'shard_size': math.ceil(math.ceil(file_size -
-                                                                     self.segment_size*(file_metadata['segments_count'] - 1))/k)}
+        segment = {'k': k, 'm': m, 'shard_size': math.ceil(
+            math.ceil(file_size - self.segment_size*(file_metadata['segments_count'] - 1))/k)}
         file_metadata['segments'].append(segment)
         return file_metadata['segments'], file_metadata['segments_count']

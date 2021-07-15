@@ -24,11 +24,17 @@ class ContractDetails(QtWidgets.QWidget):
     def load_file_details(self, file_path):
         self.contract_details['file_size'] = os.stat(file_path).st_size
         self.file_path = file_path
-        self.ui.contract_details_file_size_label.setText("File Size: " + "{:.2f}".format(
-            self.contract_details['file_size']/self.settings.megabyte) + " MB")
+        unit = ["KB", "MB", "GB"]
+        index = -1
+        file_size = self.contract_details['file_size']
+        while int(file_size/self.settings.kilobyte) > 0 and index < 2:
+            index += 1
+            file_size = file_size/self.settings.kilobyte
+        self.ui.contract_details_file_size_label.setText("File Size: " + "{:.3f}".format(file_size) + " " + unit[index])
         self.calculate_price()
 
     def calculate_price(self):
+        # TODO: Get price from decentorage.
         price = random.randint(0, 1000)
         self.ui.contract_details_price_label.setText("Price:" + str(price))
 
