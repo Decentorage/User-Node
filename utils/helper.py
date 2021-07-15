@@ -18,6 +18,7 @@ class Settings:
         self.shard_filename = "shard"
         self.segment_filename = "segment"
         self.cache_file = os.path.realpath("data/decentorage_cache")
+        self.transfer_file = os.path.realpath("data/decentorage_transfer")
         self.upload_connection_file = os.path.realpath("data/connections.text")
         self.host_url = "http://192.168.1.3:5000/"
         self.client_url_prefix = 'user/'
@@ -29,7 +30,7 @@ class Settings:
         self.upload_polling_time = 10
         self.min_price = 0.25
         self.state_upload_file = '1'
-        self.state_upload_file_text = "Please start your upload"
+        self.state_upload_file_text = "Please enter your encryption key and start your upload"
         self.state_initiate_contract_instance = '2'
         self.state_initiate_contract_instance_text = "You have a pending contract, please select a file to upload"
         self.state_recharge = '3'
