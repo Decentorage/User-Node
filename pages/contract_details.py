@@ -56,7 +56,7 @@ class ContractDetails(QtWidgets.QWidget):
             self.save_file_to_upload_info()
 
     def save_file_to_upload_info(self):
-        request_info = {'file_path': self.file_path}
+        request_info = {'file_path': self.file_path, 'start_flag': True, 'type': 'upload'}
         if not os.path.exists(self.helper.transfer_file):
             outfile = open(self.helper.transfer_file, "x")
             json.dump(request_info, outfile)

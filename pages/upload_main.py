@@ -34,32 +34,40 @@ class UploadMain(QtWidgets.QWidget):
         self.filename = filename
 
     def start_uploading(self):
-        with open(self.helper.upload_connection_file) as json_file:
-            file_path = json.load(json_file)
+        with open(self.helper.transfer_file) as json_file:
+            file_path = json.load(json_file)['file_path']
         process_file(file_path, self.key)
 
     def poll_state(self):
         self.filename = None
         while not self.ui.about_to_close and self.ui.stackedWidget.currentWidget() == self.ui.upload_main_page:
             state = get_user_state()
-
+            # State: there is a pending contract paid
             if state == self.helper.state_upload_file:
+                # TODO: Not to disable upload button
                 self.ui.upload_main_start_uploading_pb.setEnabled(False)
                 self.ui.upload_main_encryption_key_line_edit.setEnabled(True)
                 self.ui.upload_main_initiate_contract_pb.setEnabled(False)
                 self.ui.upload_main_status_label.setText(self.helper.state_upload_file_text)
-
-            elif state == self.helper.state_initiate_contract_instance:
+            # State: no pending contract instance and there is seeds
+            elif state == self.helper.state_create_contract:
                 self.ui.upload_main_start_uploading_pb.setEnabled(False)
                 self.ui.upload_main_encryption_key_line_edit.setEnabled(False)
                 self.ui.upload_main_initiate_contract_pb.setEnabled(True)
-                self.ui.upload_main_status_label.setText(self.helper.state_initiate_contract_instance_text)
-
+                self.ui.upload_main_status_label.setText(self.helper.state_create_contract_text)
+            # State: no pending contract instance and no seeds
+            elif state == self.helper.state_no_seeds:
+                self.ui.upload_main_start_uploading_pb.setEnabled(False)
+                self.ui.upload_main_encryption_key_line_edit.setEnabled(False)
+                self.ui.upload_main_initiate_contract_pb.setEnabled(False)
+                self.ui.upload_main_status_label.setText(self.helper.state_no_seeds_text)
+            # State: there is a pending contract but not paid
             else:
                 self.ui.upload_main_start_uploading_pb.setEnabled(False)
                 self.ui.upload_main_encryption_key_line_edit.setEnabled(False)
                 self.ui.upload_main_initiate_contract_pb.setEnabled(False)
-                self.ui.upload_main_status_label.setText(self.helper.state_recharge_text)
+                # TODO: Add button redirect to web to pay pending contract.
+                self.ui.upload_main_status_label.setText(self.helper.state_unpaid_pending_contract_text)
 
             time.sleep(self.helper.upload_polling_time)
 

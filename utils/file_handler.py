@@ -1,40 +1,52 @@
 import os
+import json
 from .erasure_coding import encode, decode
 from .encryption import encrypt, decrypt
 from .helper import Helper
+from .decentorage import get_pending_file_info
 from .file_transfer_user import send_data, add_connection
 helper = Helper()
 
 
-def process_segment(from_file, key, segment_number):
+def process_segment(from_file, key, segment_number, transfer_obj):
     # Reset
     # helper.reset_directories()
 
-    # Encryption
-    filename = os.path.basename(from_file)
-    file_size = os.stat(from_file).st_size
-    encrypted_file_path = helper.get_encryption_file_path(filename)
-    encrypt(from_file, file_size, key, encrypted_file_path)
+    if not transfer_obj['segments'][segment_number]['processed']:
 
-    # Erasure coding
-    file_size = os.stat(encrypted_file_path).st_size
-    input_file = open(from_file, 'rb')
-    file_obj = input_file.read()
-    encode(file_obj, file_size, helper.shards_directory_path, segment_number)
+        # Encryption
+        filename = os.path.basename(from_file)
+        file_size = os.stat(from_file).st_size
+        encrypted_file_path = helper.get_encryption_file_path(filename)
+        encrypt(from_file, file_size, key, encrypted_file_path)
 
-    # Upload Shards
-    shards = os.listdir(helper.shards_directory_path)
-    for shard in shards:
-        # TODO: Get parameters data
-        ip = "192.168.1.7"
+        # Erasure coding
+        file_size = os.stat(encrypted_file_path).st_size
+        input_file = open(from_file, 'rb')
+        file_obj = input_file.read()
+        encode(file_obj, file_size, helper.shards_directory_path, segment_number)
+
+        # Rename Shards to their new ids
+        shards = os.listdir(helper.shards_directory_path)
+        shards_new = transfer_obj['segments'][segment_number]['shards']
+        for shard_index, shard_name in enumerate(shards):
+            os.rename(os.path.realpath(helper.shards_directory_path + '\\' + shard_name),
+                      os.path.realpath(helper.shards_directory_path + '\\' + shards_new[shard_index]["shard_id"]))
+
+        transfer_obj['segments'][segment_number]['processed'] = True
+        save_transfer_file(transfer_obj)
+
+    # Upload Shards: Add connections and upload
+    for shard_index, shard in enumerate(transfer_obj['segments'][segment_number]['shards']):
         req = {'type': 'upload',
-               'port': int(5000),
-               'shard_id': 'test1233',
-               'auth': 'test1233'
+               'port': int(5000),               # shard['port']
+               'shard_id': shard['shard_id'],
+               'auth': 'test1233',              # shard['auth']
+               'ip': ""                         # shard['ip']
                }
-        # add_connection(req)
-        # send_data(req, ip, True)
-        # print(shard, " Sent !!")
+        add_connection(req)
+        # send_data(req, True)
+        transfer_obj['segments'][segment_number]['shards']['done_uploading'] = True
 
     input_file.close()
 
@@ -46,7 +58,28 @@ def process_file(from_file, key, chunk_size=helper.segment_size):
     :param key: encryption key
     :param chunk_size: segment size
     """
+    print("process file function")
+    transfer_obj = read_transfer_file()
+    response = get_pending_file_info()
     file_size = os.stat(from_file).st_size
+    file_size_decentorage, segments_metadata = response['file_size'], response['segments']
+    # First time to upload.
+    print(transfer_obj['start_flag'])
+    if transfer_obj['start_flag']:
+        print("First Upload")
+        transfer_obj['segments'] = segments_metadata
+        for segment_index, segment in enumerate(segments_metadata):
+            transfer_obj['segments'][segment_index]['done_uploading'] = False
+            transfer_obj['segments'][segment_index]['processed'] = False
+        transfer_obj['key'] = key
+        save_transfer_file(transfer_obj)
+    else:   # nothing to do just a debugging statement
+        print("Resume Upload")
+
+    if file_size != file_size_decentorage:
+        print("Invalid file")
+        return
+    return
     if file_size < chunk_size:
         process_segment(from_file, key, 1)
         return
@@ -57,12 +90,13 @@ def process_file(from_file, key, chunk_size=helper.segment_size):
         chunk = input_file.read(chunk_size)         # get next part <= chunk size
         if not chunk:                               # eof=empty string from read
             break
-        file_segment_path = helper.segments_directory_path + '/' + str(segment_num) + '_' + filename
-        file_segment = open(file_segment_path, 'wb')
-        file_segment.write(chunk)
-        process_segment(file_segment_path, key, segment_num)
-        segment_num = segment_num + 1
-        file_segment.close()
+        if not transfer_obj['segments'][segment_num]['done_uploading']:
+            file_segment_path = helper.segments_directory_path + '/' + str(segment_num) + '_' + filename
+            file_segment = open(file_segment_path, 'wb')
+            file_segment.write(chunk)
+            process_segment(file_segment_path, key, segment_num, transfer_obj)
+            segment_num = segment_num + 1
+            file_segment.close()
     input_file.close()
 
 
@@ -105,3 +139,20 @@ def download_shards_and_retrieve(key, file_metadata, read_size=helper.segment_si
     # TODO: shards to be downloaded
 
     retrieve_original_file(key, file_metadata, read_size=helper.segment_size)
+
+
+def read_transfer_file():
+    if not os.path.exists(helper.transfer_file):
+        raise Exception('Cache file deleted')
+    else:
+        outfile = open(helper.transfer_file, 'r')
+        transfer_obj = json.load(outfile)
+        return transfer_obj
+
+
+def save_transfer_file(transfer_obj):
+    if not os.path.exists(helper.transfer_file):
+        raise Exception('Cache file deleted')
+    else:
+        outfile = open(helper.transfer_file, 'w')
+        json.dump(transfer_obj, outfile)

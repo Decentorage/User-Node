@@ -96,3 +96,19 @@ def create_file(contract_details):
             return helper.redirect_to_login
     except:
         raise Exception(helper.server_not_responding)
+
+
+def get_pending_file_info():
+    try:
+        token = helper.token
+        if token:
+            response = requests.get(helper.host_url + helper.client_url_prefix + 'getFileInfo',
+                                    headers={"token": token})
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return helper.redirect_to_login
+        else:  # Get user files.
+            return helper.redirect_to_login
+    except:
+        raise Exception(helper.server_not_responding)

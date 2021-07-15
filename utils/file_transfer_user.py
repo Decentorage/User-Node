@@ -12,14 +12,14 @@ def init_file_transfer_user(helper_obj):
     helper = helper_obj
 
 
-def send_data(request, ip, start):
+def send_data(request, start):
     client_socket = socket.socket()
-    client_socket.connect((ip, request['port']))
+    client_socket.connect((request['ip'], request['port']))
 
     # keep track of connection status
     connected = True
     print("connected to server")
-
+    # TODO: Read from shards directory.
     f = open(request['shard_id'], "rb")
     if not start:
         resume_msg = client_socket.recv(1024).decode("UTF-8")
@@ -38,7 +38,8 @@ def send_data(request, ip, start):
             while not connected:
                 try:
                     client_socket = socket.socket()
-                    client_socket.connect((ip, request['port']))            # get from receiver where it has stopped
+                    # get from receiver where it has stopped
+                    client_socket.connect((request['ip'], request['port']))
                     connected = True
                     resume_msg = client_socket.recv(1024).decode("UTF-8")
                     print(resume_msg)
@@ -64,9 +65,10 @@ def send_data(request, ip, start):
     print("Done sending...")
 
 
-def receive_data(request, ip):
+def receive_data(request):
     client_socket = socket.socket()
-    client_socket.connect((ip, request['port']))
+
+    client_socket.connect((request['ip'], request['port']))
 
     connected = True
     f = None
@@ -97,7 +99,7 @@ def receive_data(request, ip):
                 # attempt to reconnect, otherwise sleep for 2 seconds
                 try:
                     client_socket = socket.socket()
-                    client_socket.connect((ip, request['port']))
+                    client_socket.connect((request['ip'], request['port']))
                     connected = True
                     f.close()
                     client_socket.send(bytes(str(os.path.getsize(request['shard_id'])), "UTF-8"))
@@ -147,12 +149,3 @@ def add_connection(request):
 
     except:
         print("Error")
-
-#=================================================================
-# req = { 'type': 'upload',
-#    'port': int(2000),
-#    'shard_id': '',
-#    'auth':'dwwewrew',
-#    'size':1024}
-
-#send_data(req, True)
