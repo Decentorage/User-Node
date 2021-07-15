@@ -1,8 +1,10 @@
 import socket
 from time import sleep
 import json
+import threading
 import os
 settings = None
+semaphore = threading.Semaphore()
 
 
 def init_file_transfer_user(settings_obj):
@@ -24,13 +26,12 @@ def send_data(request, ip, start):
         print(resume_msg)
         f.seek(int(resume_msg), 0)
 
-    data2 = f.read(1024)
+    data = f.read(1024)
 
-    while data2:
+    while data:
         try:
-            client_socket.send(data2)
-            sleep(0.5)
-            data2 = f.read(1024)
+            client_socket.send(data)
+            data = f.read(1024)
         except socket.error:
             print("disconnected")
             connected = False
@@ -42,22 +43,24 @@ def send_data(request, ip, start):
                     resume_msg = client_socket.recv(1024).decode("UTF-8")
                     print(resume_msg)
                     f.seek(int(resume_msg), 0)
-                    data2 = f.read(1024)
+                    data = f.read(1024)
                     print("reconnecting")
                 except socket.error:
                     sleep(2)
                     print("sleep")
 
+    client_socket.send(bytes("END", "UTF-8"))
     f.close()
     client_socket.close()
     # remove from text file
-    data = {}
+    connections = {}
+    semaphore.acquire()
     with open(settings.upload_connection_file) as json_file:
-        data = json.load(json_file)
-    data['connections'].remove(request)
+        connections = json.load(json_file)
+    connections['connections'].remove(request)
     with open(settings.upload_connection_file, 'w') as outfile:
-        json.dump(data, outfile)
-
+        json.dump(connections, outfile)
+    semaphore.release()
     print("Done sending...")
 
 
@@ -79,10 +82,10 @@ def receive_data(request, ip):
 
     while True:
         try:
-            data2 = client_socket.recv(1024)
-            while data2:
-                f.write(data2)
-                data2 = client_socket.recv(1024)
+            data = client_socket.recv(1024)
+            while data:
+                f.write(data)
+                data = client_socket.recv(1024)
             f.close()
             break
 
@@ -106,26 +109,26 @@ def receive_data(request, ip):
 
     client_socket.close()
     # remove from text file
-    data = {}
+    connections = {}
     with open(settings.upload_connection_file) as json_file:
-        data = json.load(json_file)
-    data['connections'].remove(request)
+        connections = json.load(json_file)
+    connections['connections'].remove(request)
     with open(settings.upload_connection_file, 'w') as outfile:
-        json.dump(data, outfile)
+        json.dump(connections, outfile)
 
 
 # incomplete active connections
 def check_old_connections():
     try:
-        data = {}
+        connections = {}
         with open(settings.upload_connection_file) as json_file:
-            data = json.load(json_file)
+            connections = json.load(json_file)
 
     except:
         print("Error in file")
     finally:
-        for i in range(len(data['connections'])):
-            request = dict(data['connections'][i])
+        for i in range(len(connections['connections'])):
+            request = dict(connections['connections'][i])
             if request['type'] == 'upload':
                 send_data(request, False)
             elif request['type'] == 'download':
@@ -135,12 +138,12 @@ def check_old_connections():
 # add new connection to file
 def add_connection(request):
     try:
-        data = {}
+        connections = {}
         with open(settings.upload_connection_file) as json_file:
-            data = json.load(json_file)
-        data['connections'].append(request)
+            connections = json.load(json_file)
+        connections['connections'].append(request)
         with open(settings.upload_connection_file, 'w') as outfile:
-            json.dump(data, outfile)
+            json.dump(connections, outfile)
 
     except:
         print("Error")
