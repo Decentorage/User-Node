@@ -3,13 +3,13 @@ from time import sleep
 import json
 import threading
 import os
-settings = None
+helper = None
 semaphore = threading.Semaphore()
 
 
-def init_file_transfer_user(settings_obj):
-    global settings
-    settings = settings_obj
+def init_file_transfer_user(helper_obj):
+    global helper
+    helper = helper_obj
 
 
 def send_data(request, ip, start):
@@ -55,10 +55,10 @@ def send_data(request, ip, start):
     # remove from text file
     connections = {}
     semaphore.acquire()
-    with open(settings.upload_connection_file) as json_file:
+    with open(helper.upload_connection_file) as json_file:
         connections = json.load(json_file)
     connections['connections'].remove(request)
-    with open(settings.upload_connection_file, 'w') as outfile:
+    with open(helper.upload_connection_file, 'w') as outfile:
         json.dump(connections, outfile)
     semaphore.release()
     print("Done sending...")
@@ -110,10 +110,10 @@ def receive_data(request, ip):
     client_socket.close()
     # remove from text file
     connections = {}
-    with open(settings.upload_connection_file) as json_file:
+    with open(helper.upload_connection_file) as json_file:
         connections = json.load(json_file)
     connections['connections'].remove(request)
-    with open(settings.upload_connection_file, 'w') as outfile:
+    with open(helper.upload_connection_file, 'w') as outfile:
         json.dump(connections, outfile)
 
 
@@ -121,7 +121,7 @@ def receive_data(request, ip):
 def check_old_connections():
     try:
         connections = {}
-        with open(settings.upload_connection_file) as json_file:
+        with open(helper.upload_connection_file) as json_file:
             connections = json.load(json_file)
 
     except:
@@ -139,10 +139,10 @@ def check_old_connections():
 def add_connection(request):
     try:
         connections = {}
-        with open(settings.upload_connection_file) as json_file:
+        with open(helper.upload_connection_file) as json_file:
             connections = json.load(json_file)
         connections['connections'].append(request)
-        with open(settings.upload_connection_file, 'w') as outfile:
+        with open(helper.upload_connection_file, 'w') as outfile:
             json.dump(connections, outfile)
 
     except:

@@ -3,7 +3,7 @@ import glob
 import math
 
 
-class Settings:
+class Helper:
     kilobyte = 1024
     megabyte = kilobyte * 1024
     gigabyte = megabyte * 1024

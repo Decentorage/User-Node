@@ -1,15 +1,15 @@
 from PyQt5 import QtWidgets
 import sys
 from controllers import PageController
-from utils import Settings, init_decentorage, init_file_transfer_user
+from utils import Helper, init_decentorage, init_file_transfer_user
 
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
-    settings = Settings()
-    init_decentorage(settings)
-    init_file_transfer_user(settings)
-    page_controller = PageController(settings)
+    helper = Helper()
+    init_decentorage(helper)
+    init_file_transfer_user(helper)
+    page_controller = PageController(helper)
     app.aboutToQuit.connect(page_controller.cleanup)
     sys.exit(app.exec_())
 

@@ -10,9 +10,9 @@ import os
 
 class PageController:
 
-    def __init__(self, settings):
+    def __init__(self, helper):
         self.application_window = QtWidgets.QWidget()
-        self.application_window.setWindowIcon(QIcon(settings.icon_path))
+        self.application_window.setWindowIcon(QIcon(helper.icon_path))
         self.ui = Ui_MainWindow()
         self.ui.about_to_close = False
         self.ui.setupUi(self.application_window)
@@ -20,19 +20,19 @@ class PageController:
         self.ui.thread_pool = QThreadPool()
         self.ui.worker_waiting = False
         self.ui.waiting_spinner.start()
-        self.settings = settings
+        self.helper = helper
 
-        if self.settings.is_user_logged_in():
+        if self.helper.is_user_logged_in():
             self.ui.stackedWidget.setCurrentWidget(self.ui.main_page)
         else:
             self.ui.stackedWidget.setCurrentWidget(self.ui.login_page)
 
         # Pages
-        self.login = Login(self.ui, self.settings)
-        self.main = Main(self.ui, self.settings)
-        self.upload_main = UploadMain(self.ui, self.settings)
-        self.show_files = ShowFiles(self.ui, self.settings)
-        self.contract_details = ContractDetails(self.ui, self.settings)
+        self.login = Login(self.ui, self.helper)
+        self.main = Main(self.ui, self.helper)
+        self.upload_main = UploadMain(self.ui, self.helper)
+        self.show_files = ShowFiles(self.ui, self.helper)
+        self.contract_details = ContractDetails(self.ui, self.helper)
 
         # Error page button
         self.ui.error_ok_pb.clicked.connect(self.return_from_error_page)
@@ -71,7 +71,7 @@ class PageController:
     def logout(self):
         try:
             # Remove cached file
-            os.remove(self.settings.cache_file)
+            os.remove(self.helper.cache_file)
         except:
             return
 

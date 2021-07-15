@@ -9,10 +9,10 @@ class ShowFiles(QtWidgets.QWidget):
     back_to_main_switch = QtCore.pyqtSignal()
     logout_switch = QtCore.pyqtSignal()
 
-    def __init__(self, ui, settings):
+    def __init__(self, ui, helper):
         QtWidgets.QWidget.__init__(self)
         self.ui = ui
-        self.settings = settings
+        self.helper = helper
         self.index = None
         self.files = None
         self.key = None
@@ -29,7 +29,7 @@ class ShowFiles(QtWidgets.QWidget):
     def show_user_files(self):
         self.index = None
         response = get_user_files()
-        if response == self.settings.redirect_to_login:
+        if response == self.helper.redirect_to_login:
             self.logout_switch.emit()
         self.files = response
         list_widget = self.ui.show_files_list_widget

@@ -5,10 +5,10 @@ from utils import user_login
 
 class Login(QtWidgets.QWidget):
 
-    def __init__(self, ui, settings):
+    def __init__(self, ui, helper):
         QtWidgets.QWidget.__init__(self)
         self.ui = ui
-        self.settings = settings
+        self.helper = helper
         # Connectors
         self.ui.login_pb.clicked.connect(lambda: call_worker(self.login, ui, ui.main_page, "Logging in.."))
 
@@ -19,4 +19,4 @@ class Login(QtWidgets.QWidget):
             raise Exception('please fill username and password fields.')
         else:
             user_login(username, password)
-        self.settings.get_token()
+        self.helper.get_token()

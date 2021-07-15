@@ -1,7 +1,7 @@
 import hashlib
 import random
-from .settings import Settings
-settings = Settings()
+from .helper import Helper
+helper = Helper()
 
 
 def generate_hash(salt, filename):
@@ -15,7 +15,7 @@ def generate_hash(salt, filename):
     return sha256_hash.hexdigest()
 
 
-def generate_audits(file, audits_count=settings.audits_default_count):
+def generate_audits(file, audits_count=helper.audits_default_count):
     for i in range(audits_count):
         salt = ''.join([chr(random.randint(0, 0xFF)) for i in range(16)])
         file_hash = generate_hash(salt, file)

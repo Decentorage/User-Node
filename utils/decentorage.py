@@ -1,28 +1,28 @@
 import requests
 import json
-settings = None
+helper = None
 
 
-def init_decentorage(settings_obj):
-    global settings
-    settings = settings_obj
+def init_decentorage(helper_obj):
+    global helper
+    helper = helper_obj
 
 # TODO: implement login redirect
 
 
 def user_login(username, password):
     try:
-        response = requests.post(settings.host_url + settings.client_url_prefix + 'signin',
+        response = requests.post(helper.host_url + helper.client_url_prefix + 'signin',
                                  json={
                                      'username': username,
                                      'password': password
                                  })
     except:
-        raise Exception(settings.server_not_responding)
+        raise Exception(helper.server_not_responding)
     if response.status_code == 200:  # Login succeeded => save token
         result = response.json()
         token = result['token']
-        cache_file = open(settings.cache_file, 'w')
+        cache_file = open(helper.cache_file, 'w')
         cache_file.write(token)
     else:  # Login failed
         raise Exception(response.text)
@@ -30,9 +30,9 @@ def user_login(username, password):
 
 def get_price(contract_details):
     try:
-        token = settings.token
+        token = helper.token
         if token:
-            response = requests.get(settings.host_url + settings.client_url_prefix + 'getPrice',
+            response = requests.get(helper.host_url + helper.client_url_prefix + 'getPrice',
                                     params={
                                         "download_count": contract_details['download_count'],
                                         "duration_in_months": contract_details['duration_in_months'],
@@ -42,57 +42,57 @@ def get_price(contract_details):
             if response.status_code == 200:
                 return response.json()['price']
             else:
-                return settings.redirect_to_login
+                return helper.redirect_to_login
         else:  # Get user files.
-            return settings.redirect_to_login
+            return helper.redirect_to_login
     except:
-        raise Exception(settings.server_not_responding)
+        raise Exception(helper.server_not_responding)
 
 
 def get_user_files():
     try:
-        token = settings.token
+        token = helper.token
         if token:
-            response = requests.get(settings.host_url + settings.client_url_prefix + 'getFiles',
+            response = requests.get(helper.host_url + helper.client_url_prefix + 'getFiles',
                                     headers={"token": token})
             if response.status_code == 200:
                 return response.json()
             else:
-                return settings.redirect_to_login
+                return helper.redirect_to_login
         else:  # Get user files.
-            return settings.redirect_to_login
+            return helper.redirect_to_login
     except:
-        raise Exception(settings.server_not_responding)
+        raise Exception(helper.server_not_responding)
 
 
 def get_user_state():
     try:
-        token = settings.token
+        token = helper.token
         if token:
-            response = requests.get(settings.host_url + settings.client_url_prefix + 'getState',
+            response = requests.get(helper.host_url + helper.client_url_prefix + 'getState',
                                     headers={"token": token})
             if response.status_code == 200:
                 return response.json()['state']
             else:
-                return settings.redirect_to_login
+                return helper.redirect_to_login
         else:  # Get user files.
-            return settings.redirect_to_login
+            return helper.redirect_to_login
     except:
-        raise Exception(settings.server_not_responding)
+        raise Exception(helper.server_not_responding)
 
 
 def create_file(contract_details):
     try:
-        token = settings.token
+        token = helper.token
         if token:
-            response = requests.post(settings.host_url + settings.client_url_prefix + 'createFile',
+            response = requests.post(helper.host_url + helper.client_url_prefix + 'createFile',
                                      headers={"token": token},
                                      json=json.dumps(contract_details))
             if response.status_code == 200:
                 return True
             else:
-                return settings.redirect_to_login
+                return helper.redirect_to_login
         else:  # Get user files.
-            return settings.redirect_to_login
+            return helper.redirect_to_login
     except:
-        raise Exception(settings.server_not_responding)
+        raise Exception(helper.server_not_responding)

@@ -7,10 +7,10 @@ class Main(QtWidgets.QWidget):
     show_my_files_switch = QtCore.pyqtSignal()
     upload_files_switch = QtCore.pyqtSignal()
 
-    def __init__(self, ui, settings):
+    def __init__(self, ui, helper):
         QtWidgets.QWidget.__init__(self)
         self.ui = ui
-        self.settings = settings
+        self.helper = helper
         # Connectors
         self.ui.main_show_files_pb.clicked.connect(self.show_my_files)
         self.ui.main_upload_files_pb.clicked.connect(self.upload_files)
