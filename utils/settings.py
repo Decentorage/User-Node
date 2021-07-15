@@ -27,6 +27,7 @@ class Settings:
         self.minimum_data_shard = 4
         self.audits_default_count = 100
         self.upload_polling_time = 10
+        self.min_price = 0.25
         self.state_upload_file = '1'
         self.state_upload_file_text = "Please start your upload"
         self.state_initiate_contract_instance = '2'

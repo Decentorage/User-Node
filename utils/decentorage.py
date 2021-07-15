@@ -96,5 +96,3 @@ def create_file(contract_details):
             return settings.redirect_to_login
     except:
         raise Exception(settings.server_not_responding)
-
-# TODO: Get price

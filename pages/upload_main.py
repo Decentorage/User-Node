@@ -16,6 +16,7 @@ class UploadMain(QtWidgets.QWidget):
         # Connectors
         self.ui.upload_main_back_pb.clicked.connect(self.back_to_main)
         self.ui.upload_main_initiate_contract_pb.clicked.connect(self.set_contract_details)
+        self.ui.upload_main_start_uploading_pb.clicked.connect(self.start_uploading)
 
     def back_to_main(self):
         self.back_to_main_switch.emit()
@@ -28,6 +29,9 @@ class UploadMain(QtWidgets.QWidget):
     def browse(self):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName()
         self.filename = filename
+
+    def start_uploading(self):
+        print("start Uploading")
 
     def poll_state(self):
         self.filename = None
