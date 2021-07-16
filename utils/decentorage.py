@@ -1,5 +1,7 @@
 import requests
 import json
+import time
+import os
 helper = None
 
 
@@ -28,7 +30,7 @@ def user_login(username, password):
         raise Exception(response.text)
 
 
-def get_price(contract_details):
+def get_price(contract_details, ui):
     try:
         token = helper.token
         if token:
@@ -39,78 +41,115 @@ def get_price(contract_details):
                                         "file_size": contract_details['file_size']
                                     },
                                     headers={"token": token})
-            if response.status_code == 200:
-                return response.json()['price']
-            else:
-                return helper.redirect_to_login
         else:  # Get user files.
-            return helper.redirect_to_login
+            worker_error_page("Please Login again", "", ui, ui.login_page)
+            return False
     except:
-        raise Exception(helper.server_not_responding)
+        worker_error_page("Error", helper.server_not_responding, ui)
+        return False
+    finally:
+        if response.status_code == 200:
+            return response.json()['price']
+        else:
+            worker_error_page("Please Login again", "", ui, ui.login_page)
+            return False
 
 
-def get_user_files():
+def get_user_files(ui):
     try:
         token = helper.token
         if token:
             response = requests.get(helper.host_url + helper.client_url_prefix + 'getFiles',
                                     headers={"token": token})
-            if response.status_code == 200:
-                return response.json()
-            else:
-                return helper.redirect_to_login
         else:  # Get user files.
-            return helper.redirect_to_login
+            worker_error_page("Please Login again", "", ui, ui.login_page)
+            return False
     except:
-        raise Exception(helper.server_not_responding)
+        worker_error_page("Error", helper.server_not_responding, ui)
+        return False
+    finally:
+        if response.status_code == 200:
+            return response.json()
+        else:
+            worker_error_page("Please Login again", "", ui, ui.login_page)
+            return False
 
 
-def get_user_state():
+def get_user_state(ui):
     try:
         token = helper.token
         if token:
             response = requests.get(helper.host_url + helper.client_url_prefix + 'getState',
                                     headers={"token": token})
-            if response.status_code == 200:
-                return response.json()['state']
-            else:
-                return helper.redirect_to_login
         else:  # Get user files.
-            return helper.redirect_to_login
+            worker_error_page("Please Login again", "", ui, ui.login_page)
+            return False
     except:
-        raise Exception(helper.server_not_responding)
+        worker_error_page("Error", helper.server_not_responding, ui)
+        return False
+    finally:
+        if response.status_code == 200:
+            return response.json()['state']
+        else:
+            worker_error_page("Please Login again", "", ui, ui.login_page)
+            return False
 
 
-def create_file(contract_details):
+def create_file(contract_details, ui):
     try:
         token = helper.token
         if token:
             response = requests.post(helper.host_url + helper.client_url_prefix + 'createFile',
                                      headers={"token": token},
                                      json=json.dumps(contract_details))
-            if response.status_code == 200:
-                return True
-            elif response.status_code == 409:
-                raise Exception("This file already stored.")
-            else:
-                return False
         else:  # Get user files.
+            worker_error_page("Please Login again", "", ui, ui.login_page)
             return False
     except:
-        raise Exception(helper.server_not_responding)
+        worker_error_page("Error", helper.server_not_responding, ui)
+        return False
+    finally:
+        if response.status_code == 200:
+            return True
+        elif response.status_code == 409:
+            worker_error_page("Error", "This file already stored.", ui)
+            return False
+        else:
+            ui.stackedWidget.setCurrentWidget(ui.upload_main)
+            return False
 
 
-def get_pending_file_info():
+def get_pending_file_info(ui):
     try:
         token = helper.token
         if token:
             response = requests.get(helper.host_url + helper.client_url_prefix + 'getFileInfo',
                                     headers={"token": token})
-            if response.status_code == 200:
-                return response.json()
-            else:
-                return helper.redirect_to_login
-        else:  # Get user files.
-            return helper.redirect_to_login
+        else:
+            worker_error_page("Please Login again", "", ui, ui.login_page)
+            return False
     except:
-        raise Exception(helper.server_not_responding)
+        worker_error_page("Error", helper.server_not_responding, ui)
+        return False
+    finally:
+        if response.status_code == 200:
+            return response.json()
+        else:
+            worker_error_page("Please Login again", "", ui, ui.login_page)
+            return False
+
+
+def worker_error_page(title, body, gui, target=None):
+    gui.error_body.setText(body)
+    gui.error_title.setText(title)
+    if target:
+        gui.error_source_page = target
+        try:
+            # Remove cached file
+            gui.error_source_page = gui.login_page
+            os.remove(helper.cache_file)
+        except:
+            print("No cache file")
+    else:
+        gui.error_source_page = gui.stackedWidget.currentWidget()
+    gui.stackedWidget.setCurrentWidget(gui.error_page)

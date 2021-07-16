@@ -1,6 +1,9 @@
 from PyQt5.QtCore import QRunnable, pyqtSlot, QObject, pyqtSignal
 from PyQt5.QtWidgets import QWidget
 import time
+import os
+from utils import Helper
+helper = Helper()
 
 
 class Worker(QRunnable):
@@ -52,10 +55,18 @@ class Worker(QRunnable):
                 self.change_page_signal_emitter.change_page(self.ui.stackedWidget, self.current_page)
 
 
-def worker_error_page(title, body, ui):
+def worker_error_page(title, body, ui, target=None):
     title = str(title)
     body = str(body)
-    ui.error_source_page = ui.stackedWidget.currentWidget()
+    if target:
+        ui.error_source_page = target
+        try:
+            # Remove cached file
+            os.remove(helper.cache_file)
+        except:
+            print("No cache file")
+    else:
+        ui.error_source_page = ui.stackedWidget.currentWidget()
     ui.worker_waiting = True
 
     class ErrorSignalEmitter(QObject):

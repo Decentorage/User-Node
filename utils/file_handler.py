@@ -62,17 +62,18 @@ def process_segment(from_file, key, segment_number, transfer_obj):
     helper.reset_shards()
 
 
-def process_file(from_file, key, chunk_size=helper.segment_size):
+def process_file(from_file, key, ui, chunk_size=helper.segment_size):
     """
     This function divides the file into segments to process each segment separately
     :param from_file: input file that will be uploaded
     :param key: encryption key
     :param chunk_size: segment size
+    :param ui: ui object
     """
     try:
         print("process file function")
         transfer_obj = read_transfer_file()
-        response = get_pending_file_info()
+        response = get_pending_file_info(ui)
         file_size = os.stat(from_file).st_size
         file_size_decentorage, segments_metadata = response['file_size'], response['segments']
         # First time to upload.

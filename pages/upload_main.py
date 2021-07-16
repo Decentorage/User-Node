@@ -2,6 +2,7 @@ from PyQt5 import QtCore, QtWidgets
 from utils import get_user_state, process_file
 import time
 import json
+import os
 
 
 class UploadMain(QtWidgets.QWidget):
@@ -37,12 +38,12 @@ class UploadMain(QtWidgets.QWidget):
     def start_uploading(self):
         with open(self.helper.transfer_file) as json_file:
             file_path = json.load(json_file)['file_path']
-        process_file(file_path, self.key)
+        process_file(file_path, self.key, self.ui)
 
     def poll_state(self):
         self.filename = None
         while not self.ui.about_to_close and self.ui.stackedWidget.currentWidget() == self.ui.upload_main_page:
-            state = get_user_state()
+            state = get_user_state(self.ui)
             # State: there is a pending contract paid
             if state == self.helper.state_upload_file:
                 key_size = len(self.ui.upload_main_encryption_key_line_edit.text())
@@ -50,6 +51,12 @@ class UploadMain(QtWidgets.QWidget):
                     self.ui.upload_main_start_uploading_pb.setEnabled(True)
                 else:
                     self.ui.upload_main_start_uploading_pb.setEnabled(False)
+                # If there is a pending upload resume else start
+                if os.path.exists(self.helper.transfer_file):
+                    self.ui.upload_main_start_uploading_pb.setText("Resume Uploading")
+                    self.ui.upload_main_start_uploading_pb.setEnabled(True)
+                else:
+                    self.ui.upload_main_start_uploading_pb.setText("Start Uploading")
                 self.ui.upload_main_encryption_key_line_edit.setEnabled(True)
                 self.ui.upload_main_initiate_contract_pb.setEnabled(False)
                 self.ui.upload_main_status_label.setText(self.helper.state_upload_file_text)

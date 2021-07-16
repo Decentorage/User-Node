@@ -25,8 +25,8 @@ class Helper:
         self.client_url_prefix = 'user/'
         self.redirect_to_login = "Redirect to login"
         self.server_not_responding = "Check your internet connection"
-        self.erasure_factor = 3
-        self.minimum_data_shard = 4
+        self.erasure_factor = 1
+        self.minimum_data_shard = 2
         self.audits_default_count = 100
         self.upload_polling_time = 10
         self.min_price = 0.25

@@ -28,7 +28,7 @@ class ShowFiles(QtWidgets.QWidget):
 
     def show_user_files(self):
         self.index = None
-        response = get_user_files()
+        response = get_user_files(self.ui)
         if response == self.helper.redirect_to_login:
             self.logout_switch.emit()
         self.files = response

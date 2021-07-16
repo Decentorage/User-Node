@@ -38,7 +38,7 @@ class ContractDetails(QtWidgets.QWidget):
     def calculate_price(self):
         self.contract_details['download_count'] = self.ui.contract_details_download_counts_spin_box.value()
         self.contract_details['duration_in_months'] = self.ui.contract_details_months_spin_box.value()
-        price = get_price(self.contract_details)
+        price = get_price(self.contract_details, self.ui)
         if price == self.helper.min_price:
             self.ui.contract_details_price_label.setText("Minimum price:" + str(self.helper.min_price) + " $")
         else:
@@ -51,7 +51,7 @@ class ContractDetails(QtWidgets.QWidget):
         self.contract_details['segments'], self.contract_details['segments_count'] = \
             self.helper.get_file_metadata(self.contract_details['file_size'])
         # If file is created successfully go to upload main page
-        if create_file(self.contract_details):
+        if create_file(self.contract_details, self.ui):
             self.go_to_upload_main_switch.emit()
             self.save_file_to_upload_info()
 
