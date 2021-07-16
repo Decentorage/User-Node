@@ -8,6 +8,7 @@ class UploadMain(QtWidgets.QWidget):
     # Signals
     back_to_main_switch = QtCore.pyqtSignal()
     contract_details_switch = QtCore.pyqtSignal(str)
+    start_uploading_switch = QtCore.pyqtSignal()
 
     def __init__(self, ui, helper):
         QtWidgets.QWidget.__init__(self)
@@ -18,7 +19,7 @@ class UploadMain(QtWidgets.QWidget):
         # Connectors
         self.ui.upload_main_back_pb.clicked.connect(self.back_to_main)
         self.ui.upload_main_initiate_contract_pb.clicked.connect(self.set_contract_details)
-        self.ui.upload_main_start_uploading_pb.clicked.connect(self.start_uploading)
+        self.ui.upload_main_start_uploading_pb.clicked.connect(self.start_uploading_switch.emit)
         self.ui.upload_main_encryption_key_line_edit.textChanged[str].connect(self.check_start_upload_conditions)
 
     def back_to_main(self):

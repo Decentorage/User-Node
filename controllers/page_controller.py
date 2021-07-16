@@ -45,6 +45,7 @@ class PageController:
         self.show_files.logout_switch.connect(self.switch_to_login)
         self.upload_main.back_to_main_switch.connect(self.switch_to_main)
         self.upload_main.contract_details_switch.connect(self.switch_contract_details)
+        self.upload_main.start_uploading_switch.connect(self.switch_start_upload)
         self.contract_details.go_to_upload_main_switch.connect(self.switch_upload_main)
 
         # Show window
@@ -67,6 +68,9 @@ class PageController:
     def switch_contract_details(self, file_path):
         call_worker(lambda: self.contract_details.load_file_details(file_path), self.ui,
                     self.ui.contract_details_page, "loading File details..")
+
+    def switch_start_upload(self):
+        call_worker(self.upload_main.start_uploading, self.ui, self.ui.contract_details_page, "Uploading file..")
 
     def logout(self):
         try:

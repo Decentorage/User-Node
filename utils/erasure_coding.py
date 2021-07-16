@@ -4,9 +4,8 @@ from .helper import Helper
 helper = Helper()
 
 
-def encode(file, file_size, directory_to_write_shards, segment_number):
-    # TODO: get k, m from server.
-    k, m = 4, 7
+def encode(file, file_size, directory_to_write_shards, segment_number, k_param, m_param):
+    k, m = k_param, m_param
     shard_name = helper.shard_filename + '_' + str(segment_number)
     filefec.encode_to_files(file, file_size, directory_to_write_shards, shard_name, k, m,
                             suffix=".fec", overwrite=False, verbose=False)

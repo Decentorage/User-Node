@@ -1,15 +1,15 @@
 import socket
 from time import sleep
 import json
-import threading
 import os
 helper = None
-semaphore = threading.Semaphore()
+semaphore = None
 
 
-def init_file_transfer_user(helper_obj):
-    global helper
+def init_file_transfer_user(helper_obj, s):
+    global helper, semaphore
     helper = helper_obj
+    semaphore = s
 
 
 def send_data(request, start):
@@ -19,7 +19,6 @@ def send_data(request, start):
     # keep track of connection status
     connected = True
     print("connected to server")
-    # TODO: Read from shards directory.
     f = open(request['shard_id'], "rb")
     if not start:
         resume_msg = client_socket.recv(1024).decode("UTF-8")
@@ -56,6 +55,10 @@ def send_data(request, start):
     # remove from text file
     connections = {}
     semaphore.acquire()
+    # TODO: Inform decentorage.
+    transfer_obj = read_transfer_file()
+    transfer_obj['segments'][request['segment_number']]['shards'][request['shard_index']]['done_uploading'] = True
+    save_transfer_file(transfer_obj)
     with open(helper.upload_connection_file) as json_file:
         connections = json.load(json_file)
     connections['connections'].remove(request)
@@ -149,3 +152,20 @@ def add_connection(request):
 
     except:
         print("Error")
+
+
+def read_transfer_file():
+    if not os.path.exists(helper.transfer_file):
+        raise Exception('Cache file deleted')
+    else:
+        outfile = open(helper.transfer_file, 'r')
+        transfer_obj = json.load(outfile)
+        return transfer_obj
+
+
+def save_transfer_file(transfer_obj):
+    if not os.path.exists(helper.transfer_file):
+        raise Exception('Cache file deleted')
+    else:
+        outfile = open(helper.transfer_file, 'w')
+        json.dump(transfer_obj, outfile)

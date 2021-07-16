@@ -20,7 +20,7 @@ class Helper:
         self.segment_filename = "segment"
         self.cache_file = os.path.realpath("data/decentorage_cache")
         self.transfer_file = os.path.realpath("data/decentorage_transfer.json")
-        self.upload_connection_file = os.path.realpath("data/connections.text")
+        self.upload_connection_file = os.path.realpath("data/connections.txt")
         self.host_url = "http://192.168.1.3:5000/"
         self.client_url_prefix = 'user/'
         self.redirect_to_login = "Redirect to login"
@@ -40,9 +40,9 @@ class Helper:
         self.state_no_seeds_text = "You have to request a seed before you can select a file to upload"
         self.token = None
 
-        mem = virtual_memory()
-        self.segment_size = math.floor(mem - int(2 * self.gigabyte))
-        # self.segment_size = int(25 * self.megabyte)                             # 5 MBs for test purposes
+        # mem = virtual_memory()
+        # self.segment_size = math.floor(mem - int(2 * self.gigabyte))
+        self.segment_size = int(25 * self.megabyte)                             # 5 MBs for test purposes
 
         # create directories if not exist.
         if not os.path.exists(self.shards_directory_path):
@@ -61,13 +61,15 @@ class Helper:
         """
         Delete content of temporary directories
         """
-        files = glob.glob(self.shards_directory_path + '/*')
-        for f in files:
-            os.remove(f)
         files = glob.glob(self.segments_directory_path + '/*')
         for f in files:
             os.remove(f)
         files = glob.glob(os.path.realpath(self.encryption_directory) + '/*')
+        for f in files:
+            os.remove(f)
+
+    def reset_shards(self):
+        files = glob.glob(self.shards_directory_path + '/*')
         for f in files:
             os.remove(f)
 
