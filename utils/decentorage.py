@@ -90,10 +90,12 @@ def create_file(contract_details):
                                      json=json.dumps(contract_details))
             if response.status_code == 200:
                 return True
+            elif response.status_code == 409:
+                raise Exception("This file already stored.")
             else:
-                return helper.redirect_to_login
+                return False
         else:  # Get user files.
-            return helper.redirect_to_login
+            return False
     except:
         raise Exception(helper.server_not_responding)
 

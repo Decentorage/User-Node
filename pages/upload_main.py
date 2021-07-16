@@ -45,8 +45,11 @@ class UploadMain(QtWidgets.QWidget):
             state = get_user_state()
             # State: there is a pending contract paid
             if state == self.helper.state_upload_file:
-                # TODO: Not to disable upload button
-                self.ui.upload_main_start_uploading_pb.setEnabled(False)
+                key_size = len(self.ui.upload_main_encryption_key_line_edit.text())
+                if 0 < key_size < 32:
+                    self.ui.upload_main_start_uploading_pb.setEnabled(True)
+                else:
+                    self.ui.upload_main_start_uploading_pb.setEnabled(False)
                 self.ui.upload_main_encryption_key_line_edit.setEnabled(True)
                 self.ui.upload_main_initiate_contract_pb.setEnabled(False)
                 self.ui.upload_main_status_label.setText(self.helper.state_upload_file_text)
