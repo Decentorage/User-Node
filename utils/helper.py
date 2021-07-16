@@ -1,6 +1,7 @@
 import os
 import glob
 import math
+from psutil import virtual_memory
 
 
 class Helper:
@@ -39,8 +40,9 @@ class Helper:
         self.state_no_seeds_text = "You have to request a seed before you can select a file to upload"
         self.token = None
 
-        # self.segment_size = int(14 * self.gigabyte)                                   # 14 GBs max segment size
-        self.segment_size = int(16 * self.megabyte)                                   # 5 MBs for test purposes
+        mem = virtual_memory()
+        self.segment_size = math.floor(mem - int(2 * self.gigabyte))
+        # self.segment_size = int(25 * self.megabyte)                             # 5 MBs for test purposes
 
         # create directories if not exist.
         if not os.path.exists(self.shards_directory_path):
