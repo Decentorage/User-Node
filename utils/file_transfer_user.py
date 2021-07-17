@@ -30,11 +30,13 @@ def send_data(request, start, ui):
     #     print(resume_msg)
     #     f.seek(int(resume_msg), 0)
 
-    data = f.read()
+    data = f.read(1024)
 
     try:
-        data_dict = {"data": data}
-        client_socket.send(pickle.dumps(data_dict))
+        while data:
+            data_dict = {"data": data}
+            client_socket.send(pickle.dumps(data_dict))
+            data= f.read(1024)
     except socket.error:
         print("disconnected")
         connected = False
