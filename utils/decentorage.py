@@ -1,6 +1,5 @@
 import requests
 import json
-import time
 import os
 helper = None
 
@@ -134,6 +133,56 @@ def get_pending_file_info(ui):
     finally:
         if response.status_code == 200:
             return response.json()
+        else:
+            worker_error_page("Please Login again", "", ui, ui.login_page)
+            return False
+
+
+def shard_done_uploading(shard_id, audits, ui):
+    try:
+        token = helper.token
+        if token:
+            response = requests.get(helper.host_url + helper.client_url_prefix + 'startDownload',
+                                    json={
+                                        "shard_id": shard_id,
+                                        "audits": audits
+                                    },
+                                    headers={"token": token})
+        else:  # Get user files.
+            worker_error_page("Please Login again", "", ui, ui.login_page)
+            return False
+    except:
+        worker_error_page("Error", helper.server_not_responding, ui)
+        return False
+    finally:
+        if response.status_code == 200:
+            return True
+        else:
+            worker_error_page("Please Login again", "", ui, ui.login_page)
+            return False
+
+
+def start_download(filename, ui):
+    try:
+        token = helper.token
+        if token:
+            response = requests.get(helper.host_url + helper.client_url_prefix + 'startDownload',
+                                    json={
+                                        "filename": filename
+                                    },
+                                    headers={"token": token})
+        else:  # Get user files.
+            worker_error_page("Please Login again", "", ui, ui.login_page)
+            return False
+    except:
+        worker_error_page("Error", helper.server_not_responding, ui)
+        return False
+    finally:
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code == 404 or response.status_code == 405:
+            worker_error_page("Error", response.text(), ui)
+            return False
         else:
             worker_error_page("Please Login again", "", ui, ui.login_page)
             return False

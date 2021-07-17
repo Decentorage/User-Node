@@ -4,13 +4,12 @@ import sys
 from .erasure_coding import encode, decode
 from .encryption import encrypt, decrypt
 from .helper import Helper
-from .decentorage import get_pending_file_info, worker_error_page
+from .decentorage import get_pending_file_info, start_download, worker_error_page
 from .file_transfer_user import send_data, add_connection, check_old_connections
-from time import sleep
 helper = Helper()
 
 
-def process_segment(from_file, key, segment_number, transfer_obj):
+def process_segment(from_file, key, segment_number, transfer_obj, ui):
     """
     This function takes a segment then start to process it if it's not already processed, and start uploading shard
     by shard
@@ -53,8 +52,8 @@ def process_segment(from_file, key, segment_number, transfer_obj):
             shards = os.listdir(helper.shards_directory_path)
             shards_new = transfer_obj['segments'][segment_number]['shards']
             for shard_index, shard_name in enumerate(shards):
-                    os.rename(os.path.realpath(helper.shards_directory_path + '\\' + shard_name),
-                              os.path.realpath(helper.shards_directory_path + '\\' + shards_new[shard_index]["shard_id"]))
+                os.rename(os.path.realpath(helper.shards_directory_path + '\\' + shard_name),
+                          os.path.realpath(helper.shards_directory_path + '\\' + shards_new[shard_index]["shard_id"]))
             print("Shards Renamed")
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -72,29 +71,30 @@ def process_segment(from_file, key, segment_number, transfer_obj):
     # Upload Shards: Add connections and upload
     for shard_index, shard in enumerate(transfer_obj['segments'][segment_number]['shards']):
         # If shard is not uploaded
-        #if not shard['done_uploading']:
-        print("Segment#", segment_number, "Shard#", shard_index, "--------Start Uploading.----------")
-        # Prepare upload information dictionary
-        req = {'type': 'upload',
-               'port': shard['port'],
-               'shard_id': os.path.realpath(helper.shards_directory_path + "\\" + shard['shard_id']),
-               'auth': shard['shared_authentication_key'],
-               'ip': shard['ip_address'],
-               "segment_number": segment_number,
-               "shard_index": shard_index
-               }
-        # Add connection
-        add_connection(req)
+        if not shard['done_uploading']:
+            print("Segment#", segment_number, "Shard#", shard_index, "--------Start Uploading.----------")
+            # Prepare upload information dictionary
+            req = {'type': 'upload',
+                   'port': shard['port'],
+                   'shard_id': os.path.realpath(helper.shards_directory_path + "\\" + shard['shard_id']),
+                   'auth': shard['shared_authentication_key'],
+                   'ip': shard['ip_address'],
+                   "segment_number": segment_number,
+                   "shard_index": shard_index
+                   }
+            # Add connection
+            add_connection(req)
 
-        # Send data to storage node
-        send_data(req, True)
+            # Send data to storage node
+            send_data(req, True, ui)
 
-        # Save new state of the shard
-        # transfer_obj['segments'][segment_number]['shards'][shard_index]['done_uploading'] = True
-        # save_transfer_file(transfer_obj)
-        print("Segment#", segment_number, "Shard#", shard_index, "--------Done Uploading.----------")
-        # else:
-        #    print("Segment#", segment_number, "Shard#", shard_index, "--------Already Uploaded(Skipped)----------")
+            # Save new state of the shard
+            # transfer_obj['segments'][segment_number]['shards'][shard_index]['done_uploading'] = True
+            # save_transfer_file(transfer_obj)
+            print("Segment#", segment_number, "Shard#", shard_index, "--------Done Uploading.----------")
+
+        else:
+           print("Segment#", segment_number, "Shard#", shard_index, "--------Already Uploaded(Skipped)----------")
 
     # Reset
     # helper.reset_shards()
@@ -119,6 +119,8 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
         # First time to upload.
         if transfer_obj['start_flag']:
             print("First Upload")
+            helper.reset_shards()
+            helper.reset_directories()
             transfer_obj['segments'] = segments_metadata
             # Add segment state
             for segment_index, segment in enumerate(segments_metadata):
@@ -129,8 +131,8 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
             save_transfer_file(transfer_obj)
         else:   # Retry uploading on pending connections
             print("Resume Upload")
-            # check_old_connections()
-            if not transfer_obj['key']:
+            # check_old_connections(ui)
+            if transfer_obj['key']:
                 key = transfer_obj['key']
             else:
                 return
@@ -143,7 +145,7 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
         # File size is smaller than chunk size, 1 segment is needed
         if file_size < chunk_size:
             print("Segment", "Start Uploading.")
-            process_segment(from_file, key, 0, transfer_obj)
+            process_segment(from_file, key, 0, transfer_obj, ui)
             helper.reset_directories()
             transfer_obj['segments'][0]['done_uploading'] = True
             save_transfer_file(transfer_obj)
@@ -167,7 +169,7 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
                 file_segment_path = helper.segments_directory_path + '/' + str(segment_num) + '_' + filename
                 file_segment = open(file_segment_path, 'wb')
                 file_segment.write(chunk)
-                process_segment(file_segment_path, key, segment_num, transfer_obj)
+                process_segment(file_segment_path, key, segment_num, transfer_obj, ui)
                 file_segment.close()
                 helper.reset_directories()
                 transfer_obj['segments'][segment_num]['done_uploading'] = True
@@ -223,10 +225,10 @@ def retrieve_original_file(key, file_metadata, read_size=helper.segment_size):
     print("Done retrieving file")
 
 
-def download_shards_and_retrieve(key, file_metadata, read_size=helper.segment_size):
+def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_size):
     # TODO: shards to be downloaded
-
-    retrieve_original_file(key, file_metadata, read_size=helper.segment_size)
+    file_metadata = start_download()
+    # retrieve_original_file(key, file_metadata, read_size=helper.segment_size)
 
 
 def read_transfer_file():

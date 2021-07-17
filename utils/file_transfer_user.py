@@ -2,17 +2,19 @@ import socket
 from time import sleep
 import json
 import os
+from .audits import generate_audits
+from .decentorage import shard_done_uploading
 helper = None
 semaphore = None
 
 
-def init_file_transfer_user(helper_obj, s):
+def init_file_transfer_user(helper_obj, semaphore_obj):
     global helper, semaphore
     helper = helper_obj
-    semaphore = s
+    semaphore = semaphore_obj
 
 
-def send_data(request, start):
+def send_data(request, start, ui):
     client_socket = socket.socket()
     client_socket.connect((request['ip'], request['port']))
 
@@ -50,22 +52,29 @@ def send_data(request, start):
                     print("sleep")
 
     client_socket.send(bytes("END", "UTF-8"))
+    print("sending end connection to port", request['ip'], request['port'])
     f.close()
     client_socket.close()
-    # remove from text file
+
     connections = {}
     semaphore.acquire()
-    # TODO: Inform decentorage.
+
+    # Generate audits
+    audits = generate_audits(request["shard_id"])
+    print("Segment#", request['segment_number'], "Shard#", request['shard_index'], "--------audits generated.--------")
     transfer_obj = read_transfer_file()
     transfer_obj['segments'][request['segment_number']]['shards'][request['shard_index']]['done_uploading'] = True
     save_transfer_file(transfer_obj)
+    shard_done_uploading(request["shard_id"], audits, ui)
+
+    # remove from text file
     with open(helper.upload_connection_file) as json_file:
         connections = json.load(json_file)
     connections['connections'].remove(request)
     with open(helper.upload_connection_file, 'w') as outfile:
         json.dump(connections, outfile)
     semaphore.release()
-    print("Done sending...")
+    print("Done sending =====================")
 
 
 def receive_data(request):
@@ -123,7 +132,7 @@ def receive_data(request):
 
 
 # incomplete active connections
-def check_old_connections():
+def check_old_connections(ui):
     try:
         connections = {}
         with open(helper.upload_connection_file) as json_file:
@@ -135,7 +144,7 @@ def check_old_connections():
         for i in range(len(connections['connections'])):
             request = dict(connections['connections'][i])
             if request['type'] == 'upload':
-                send_data(request, False)
+                send_data(request, False, ui)
             elif request['type'] == 'download':
                 receive_data(request)
 

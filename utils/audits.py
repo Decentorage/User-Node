@@ -16,6 +16,8 @@ def generate_hash(salt, filename):
 
 
 def generate_audits(file, audits_count=helper.audits_default_count):
+    audits = []
     for i in range(audits_count):
         salt = ''.join([chr(random.randint(0, 0xFF)) for i in range(16)])
         file_hash = generate_hash(salt, file)
+        audits.append({"salt": salt, "hash": file_hash})
