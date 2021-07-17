@@ -114,6 +114,7 @@ def create_file(contract_details, ui):
             worker_error_page("Error", "This file already stored.", ui)
             return False
         else:
+            print("HERE1")
             ui.stackedWidget.setCurrentWidget(ui.upload_main_page)
             return False
 
@@ -142,7 +143,7 @@ def shard_done_uploading(shard_id, audits, ui):
     try:
         token = helper.token
         if token:
-            response = requests.get(helper.host_url + helper.client_url_prefix + 'startDownload',
+            response = requests.get(helper.host_url + helper.client_url_prefix + 'shardDoneUploading',
                                     json={
                                         "shard_id": shard_id,
                                         "audits": audits

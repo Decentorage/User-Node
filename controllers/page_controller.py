@@ -1,3 +1,5 @@
+import json
+
 from PyQt5.QtCore import QThreadPool, QObject, pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget
@@ -48,11 +50,14 @@ class PageController:
         self.upload_main.start_uploading_switch.connect(lambda: self.switch_start_upload("Uploading file.."))
         self.contract_details.go_to_upload_main_switch.connect(self.switch_upload_main)
 
+        if os.path.exists(self.helper.transfer_file):
+            with open(self.helper.transfer_file) as json_file:
+                start_flag = json.load(json_file)['start_flag']
+                if not start_flag and os.path.exists(self.helper.cache_file):
+                    self.switch_start_upload("Resume Uploading file..")
+
         # Show window
         self.application_window.show()
-
-        if os.path.exists(helper.transfer_file):
-            self.switch_start_upload("Resume Uploading file..")
 
     def switch_to_main(self):
         self.ui.stackedWidget.setCurrentWidget(self.ui.main_page)
