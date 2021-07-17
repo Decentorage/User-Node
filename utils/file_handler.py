@@ -1,65 +1,103 @@
 import os
 import json
+import sys
 from .erasure_coding import encode, decode
 from .encryption import encrypt, decrypt
 from .helper import Helper
-from .decentorage import get_pending_file_info
+from .decentorage import get_pending_file_info, worker_error_page
 from .file_transfer_user import send_data, add_connection, check_old_connections
 from time import sleep
 helper = Helper()
 
 
 def process_segment(from_file, key, segment_number, transfer_obj):
+    """
+    This function takes a segment then start to process it if it's not already processed, and start uploading shard
+    by shard
+    :param from_file: segment file that will be processed
+    :param key: encryption key used to encrypt segment
+    :param segment_number: segment number in a file
+    :param transfer_obj: transfer object that holds information about transaction.
+    """
+    # If the segment is not processed, process it
     if not transfer_obj['segments'][segment_number]['processed']:
         print("Segment#", segment_number, "--------Processing----------")
-        # Encryption
-        filename = os.path.basename(from_file)
-        file_size = os.stat(from_file).st_size
-        encrypted_file_path = helper.get_encryption_file_path(filename)
-        encrypt(from_file, file_size, key, encrypted_file_path)
+        # Process#1:    Encryption
+        try:
+            filename = os.path.basename(from_file)
+            file_size = os.stat(from_file).st_size
+            encrypted_file_path = helper.get_encryption_file_path(filename)
+            encrypt(from_file, file_size, key, encrypted_file_path)
+            print("Segment Encrypted")
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            function_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print("Error in Encryption", exc_type, function_name, exc_tb.tb_lineno)
+            return
+        # Process#2:    Erasure coding
+        try:
+            file_size = os.stat(encrypted_file_path).st_size
+            input_file = open(from_file, 'rb')
+            file_obj = input_file.read()
+            encode(file_obj, file_size, helper.shards_directory_path, segment_number,
+                   transfer_obj['segments'][segment_number]['k'], transfer_obj['segments'][segment_number]['m'])
+            input_file.close()
+            print("Segment Erasure coded")
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            function_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print("Error in Erasure coding", exc_type, function_name, exc_tb.tb_lineno)
+            return
+        # Process#2:    Rename Shards to their new ids
+        try:
+            shards = os.listdir(helper.shards_directory_path)
+            shards_new = transfer_obj['segments'][segment_number]['shards']
+            for shard_index, shard_name in enumerate(shards):
+                    os.rename(os.path.realpath(helper.shards_directory_path + '\\' + shard_name),
+                              os.path.realpath(helper.shards_directory_path + '\\' + shards_new[shard_index]["shard_id"]))
+            print("Shards Renamed")
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            function_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print("Error in renaming shards", exc_type, function_name, exc_tb.tb_lineno)
+            return
 
-        # Erasure coding
-        file_size = os.stat(encrypted_file_path).st_size
-        input_file = open(from_file, 'rb')
-        file_obj = input_file.read()
-        encode(file_obj, file_size, helper.shards_directory_path, segment_number,
-               transfer_obj['segments'][segment_number]['k'], transfer_obj['segments'][segment_number]['m'])
-        input_file.close()
-
-        # Rename Shards to their new ids
-        shards = os.listdir(helper.shards_directory_path)
-        shards_new = transfer_obj['segments'][segment_number]['shards']
-        for shard_index, shard_name in enumerate(shards):
-            os.rename(os.path.realpath(helper.shards_directory_path + '\\' + shard_name),
-                      os.path.realpath(helper.shards_directory_path + '\\' + shards_new[shard_index]["shard_id"]))
-
+        # Segment is processed save it's new state
         transfer_obj['segments'][segment_number]['processed'] = True
         save_transfer_file(transfer_obj)
+    # If the segment is already processed, Nothing to do just a debugging statement
     else:
         print("Segment#", segment_number, "--------Already Processed Resume uploading----------")
+
     # Upload Shards: Add connections and upload
     for shard_index, shard in enumerate(transfer_obj['segments'][segment_number]['shards']):
-        if not shard['done_uploading']:
-            print("Segment#", segment_number, "Shard#", shard_index, "--------Start Uploading.----------")
-            req = {'type': 'upload',
-                   'port': shard['port'],
-                   'shard_id': os.path.realpath(helper.shards_directory_path + "\\" + shard['shard_id']),
-                   'auth': shard['shared_authentication_key'],
-                   'ip': shard['ip_address'],
-                   "segment_number": segment_number,
-                   "shard_index": shard_index
-                   }
-            # add_connection(req)
-            sleep(3)
-            # send_data(req, True)
-            transfer_obj['segments'][segment_number]['shards'][shard_index]['done_uploading'] = True
-            save_transfer_file(transfer_obj)
-            print("Segment#", segment_number, "Shard#", shard_index, "--------Done Uploading.----------")
-        else:
-            print("Segment#", segment_number, "Shard#", shard_index, "--------Already Uploaded(Skipped)----------")
+        # If shard is not uploaded
+        #if not shard['done_uploading']:
+        print("Segment#", segment_number, "Shard#", shard_index, "--------Start Uploading.----------")
+        # Prepare upload information dictionary
+        req = {'type': 'upload',
+               'port': shard['port'],
+               'shard_id': os.path.realpath(helper.shards_directory_path + "\\" + shard['shard_id']),
+               'auth': shard['shared_authentication_key'],
+               'ip': shard['ip_address'],
+               "segment_number": segment_number,
+               "shard_index": shard_index
+               }
+        # Add connection
+        add_connection(req)
+
+        # Send data to storage node
+        send_data(req, True)
+
+        # Save new state of the shard
+        # transfer_obj['segments'][segment_number]['shards'][shard_index]['done_uploading'] = True
+        # save_transfer_file(transfer_obj)
+        print("Segment#", segment_number, "Shard#", shard_index, "--------Done Uploading.----------")
+        # else:
+        #    print("Segment#", segment_number, "Shard#", shard_index, "--------Already Uploaded(Skipped)----------")
 
     # Reset
-    helper.reset_shards()
+    # helper.reset_shards()
 
 
 def process_file(from_file, key, ui, chunk_size=helper.segment_size):
@@ -72,30 +110,49 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
     """
     try:
         print("process file function")
+        # Get needed data to start processing and uploading.
         transfer_obj = read_transfer_file()
         response = get_pending_file_info(ui)
         file_size = os.stat(from_file).st_size
         file_size_decentorage, segments_metadata = response['file_size'], response['segments']
+
         # First time to upload.
         if transfer_obj['start_flag']:
             print("First Upload")
             transfer_obj['segments'] = segments_metadata
+            # Add segment state
             for segment_index, segment in enumerate(segments_metadata):
                 transfer_obj['segments'][segment_index]['done_uploading'] = False
                 transfer_obj['segments'][segment_index]['processed'] = False
             transfer_obj['key'] = key
             transfer_obj['start_flag'] = False
             save_transfer_file(transfer_obj)
-        else:   # nothing to do just a debugging statement
-            # check_old_connections()
+        else:   # Retry uploading on pending connections
             print("Resume Upload")
-            key = transfer_obj['key']
+            # check_old_connections()
+            if not transfer_obj['key']:
+                key = transfer_obj['key']
+            else:
+                return
 
+        # File path has been changed
         if file_size != file_size_decentorage:
             print("Invalid file")
             return
+
+        # File size is smaller than chunk size, 1 segment is needed
         if file_size < chunk_size:
-            process_segment(from_file, key, 1, transfer_obj)
+            print("Segment", "Start Uploading.")
+            process_segment(from_file, key, 0, transfer_obj)
+            helper.reset_directories()
+            transfer_obj['segments'][0]['done_uploading'] = True
+            save_transfer_file(transfer_obj)
+            print("Segment", "Done Uploading. Cleaning up ....")
+            try:
+                os.remove(helper.transfer_file)
+            except:
+                raise Exception("Error Occurred while deleting transfer file.")
+            print("Done Processing and uploading file.")
             return
         filename = os.path.basename(from_file)
         segment_num = 0
@@ -125,8 +182,10 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
             raise Exception("Error Occurred while deleting transfer file.")
         print("Done Processing and uploading file.")
         input_file.close()
-    except:
-        raise Exception("Error in process file")
+    except Exception as e:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, filename, exc_tb.tb_lineno)
 
 
 def retrieve_original_file(key, file_metadata, read_size=helper.segment_size):

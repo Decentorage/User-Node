@@ -36,9 +36,10 @@ class UploadMain(QtWidgets.QWidget):
         self.filename = filename
 
     def start_uploading(self):
-        with open(self.helper.transfer_file) as json_file:
-            file_path = json.load(json_file)['file_path']
-        process_file(file_path, self.key, self.ui)
+        if self.key:
+            with open(self.helper.transfer_file) as json_file:
+                file_path = json.load(json_file)['file_path']
+            process_file(file_path, self.key, self.ui)
 
     def poll_state(self):
         self.filename = None
@@ -53,7 +54,13 @@ class UploadMain(QtWidgets.QWidget):
                     self.ui.upload_main_start_uploading_pb.setEnabled(False)
                 # If there is a pending upload resume else start
                 if os.path.exists(self.helper.transfer_file):
-                    self.ui.upload_main_start_uploading_pb.setText("Resume Uploading")
+                    with open(self.helper.transfer_file) as json_file:
+                        start_flag = json.load(json_file)['start_flag']
+                    if not start_flag:
+                        self.ui.upload_main_start_uploading_pb.setText("Resume Uploading")
+                    else:
+                        if 0 < key_size < 32:
+                            self.ui.upload_main_start_uploading_pb.setText("Start Uploading")
                     self.ui.upload_main_start_uploading_pb.setEnabled(True)
                 else:
                     self.ui.upload_main_start_uploading_pb.setText("Start Uploading")

@@ -109,13 +109,13 @@ def create_file(contract_details, ui):
         worker_error_page("Error", helper.server_not_responding, ui)
         return False
     finally:
-        if response.status_code == 200:
+        if response.status_code == 201:
             return True
         elif response.status_code == 409:
             worker_error_page("Error", "This file already stored.", ui)
             return False
         else:
-            ui.stackedWidget.setCurrentWidget(ui.upload_main)
+            ui.stackedWidget.setCurrentWidget(ui.upload_main_page)
             return False
 
 

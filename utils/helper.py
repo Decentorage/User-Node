@@ -42,7 +42,7 @@ class Helper:
 
         # mem = virtual_memory()
         # self.segment_size = math.floor(mem - int(2 * self.gigabyte))
-        self.segment_size = int(25 * self.megabyte)                             # 5 MBs for test purposes
+        self.segment_size = int(600 * self.megabyte)                             # temporary value for test purposes
 
         # create directories if not exist.
         if not os.path.exists(self.shards_directory_path):

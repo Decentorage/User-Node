@@ -134,7 +134,7 @@ dmypy.json
 # Temporary use
 ui/
 shards/
-temp/
+input/
 encrypted/
 download/
 segments/
