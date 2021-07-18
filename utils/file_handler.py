@@ -36,7 +36,7 @@ def process_segment(from_file, key, segment_number, transfer_obj, ui):
         # Process#2:    Erasure coding
         try:
             file_size = os.stat(encrypted_file_path).st_size
-            input_file = open(from_file, 'rb')
+            input_file = open(encrypted_file_path, 'rb')
             file_obj = input_file.read()
             encode(file_obj, file_size, helper.shards_directory_path, segment_number,
                    transfer_obj['segments'][segment_number]['k'], transfer_obj['segments'][segment_number]['m'])
@@ -202,18 +202,20 @@ def retrieve_original_file(key, info, read_size=helper.segment_size):
         for segment_num, segment in enumerate(info["segments"]):
             segment_name = helper.segment_filename + '_' + str(segment_num)
             print("-----------------Decoding Segment#" + str(segment_num) + "-----------------")
-            decode(helper.download_directory_path, helper.segments_directory_path, segment_num, segment['k'])
+            decode(helper.shards_directory_path, helper.encryption_directory, segment_num, segment['k'])
             print("-----------------Decrypting Segment#" + str(segment_num) + "-----------------")
-            decrypt(key, segment_name, segment_name + ".enc")
+            decrypt(key, os.path.join(helper.encryption_directory, segment_name),
+                    os.path.join(helper.segments_directory_path, segment_name))
     else:
         segment_name = helper.segment_filename + '_0'
         print("-----------------Decoding Segment#0-----------------")
-        decode(helper.download_directory_path, helper.segments_directory_path, 0, info["segments"][0]['k'])
-        print("-----------------Decoding Segment#0-----------------")
-        decrypt(key, segment_name, segment_name + ".enc")
+        decode(helper.shards_directory_path, helper.encryption_directory, 0, info["segments"][0]['k'])
+        print("-----------------Decrypting Segment#0-----------------")
+        decrypt(key, os.path.join(helper.encryption_directory, segment_name),
+                os.path.join(helper.segments_directory_path, segment_name))
 
     print("-----------------Retrieve file-----------------")
-    output = open(info['filename'], 'wb')
+    output = open(os.path.join(helper.downloaded_output, info['filename']), 'wb')
     parts = os.listdir(helper.segments_directory_path)
     parts.sort()
     for filename in parts:
@@ -230,6 +232,9 @@ def retrieve_original_file(key, info, read_size=helper.segment_size):
 
 
 def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_size):
+    print("-----------------Cleaning up-----------------")
+    # helper.reset_directories()
+    # helper.reset_shards()
     print("-----------------Request Download from Decentorage ----------------")
     segments = start_download(filename, ui)
     if segments:
@@ -244,9 +249,9 @@ def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_siz
                 print("-----------------Downloading Shard#"+str(shard['shard_no'])+" in Segment#"+
                       str(shard['segment_no'])+"----------------")
                 # Add connection
-                add_connection(req)
+                # add_connection(req)
                 # Send data to storage node
-                receive_data(req)
+                # receive_data(req)
                 print("-----------------Download Done ----------------")
     else:
         return
@@ -254,8 +259,15 @@ def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_siz
         print("-----------------Shards Renaming----------------")
         for segment in segments:
             for shard in segment['shards']:
-                os.rename(shard['shard_id'], helper.shard_filename + "_" + str(shard['segment_no']) + "." +
-                          str(shard['shard_no']) + "_" + str(segment["m"]))
+                print(os.path.join(helper.shards_directory_path, shard['shard_id']),
+                      os.path.join(helper.shards_directory_path,
+                                   helper.shard_filename + "_" + str(shard['segment_no']) + "." +
+                                   str(shard['shard_no']) + "_" + str(segment["m"])))
+
+                os.rename(os.path.join(helper.shards_directory_path, shard['shard_id']),
+                          os.path.join(helper.shards_directory_path,
+                                       helper.shard_filename + "_" + str(shard['segment_no']) + "." +
+                                       str(shard['shard_no']) + "_" + str(segment["m"])))
         print("-----------------Shards Renamed-----------------")
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()

@@ -11,19 +11,19 @@ class Helper:
 
     def __init__(self):
         # define directories used in workspace.
-        self.shards_directory_path = os.path.realpath("shards")
-        self.download_directory_path = os.path.realpath("download")
-        self.segments_directory_path = os.path.realpath("segments")
+        self.shards_directory_path = os.path.realpath("data/shards")
+        self.segments_directory_path = os.path.realpath("data/segments")
+        self.downloaded_output = os.path.realpath("data/output data")
+        self.encryption_directory = os.path.realpath("data/encrypted")
+
         self.icon_path = os.path.realpath("gui/resources/decentorage_icon.png")
-        self.encryption_directory = "encrypted"
         self.shard_filename = "shard"
         self.segment_filename = "segment"
-        self.cache_file = os.path.realpath("data/decentorage_cache")
-        self.transfer_file = os.path.realpath("data/decentorage_transfer.json")
-        self.upload_connection_file = os.path.realpath("data/connections.txt")
+        self.cache_file = os.path.realpath("data/cache/decentorage_cache")
+        self.transfer_file = os.path.realpath("data/cache/decentorage_transfer.json")
+        self.upload_connection_file = os.path.realpath("data/cache/connections.txt")
         self.host_url = "http://192.168.1.3:5000/"
         self.client_url_prefix = 'user/'
-        self.redirect_to_login = "Redirect to login"
         self.server_not_responding = "Check your internet connection"
         self.erasure_factor = 1
         self.minimum_data_shard = 2
@@ -47,12 +47,12 @@ class Helper:
         # create directories if not exist.
         if not os.path.exists(self.shards_directory_path):
             os.makedirs(self.shards_directory_path)
-        if not os.path.exists(self.download_directory_path):
-            os.makedirs(self.download_directory_path)
         if not os.path.exists(self.encryption_directory):
             os.makedirs(self.encryption_directory)
         if not os.path.exists(self.segments_directory_path):
             os.makedirs(self.segments_directory_path)
+        if not os.path.exists(self.downloaded_output):
+            os.makedirs(self.downloaded_output)
 
     def get_encryption_file_path(self, filename):
         return os.path.realpath(self.encryption_directory + "/" + filename + ".enc")
