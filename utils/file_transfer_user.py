@@ -26,7 +26,7 @@ def send_data(request, start, ui):
 
     # keep track of sending status
     success = True
-    print("connected to server")
+    print("Connected to server")
     f = open(request['shard_id'], "rb")
     if not start:
         resume_frame = client_socket.recv()
@@ -46,7 +46,8 @@ def send_data(request, start, ui):
             data = f.read(1024)
 
         except:
-            print("disconnected")
+            print("Disconnected")
+            sleep(5)
             connected = False
             try:
                 client_socket = context.socket(zmq.PAIR)
@@ -59,7 +60,6 @@ def send_data(request, start, ui):
                 print("Reconnected Successfully")
 
                 # get from host where it has received
-                connected = True
                 resume_frame = client_socket.recv()
                 resume_frame = pickle.loads(resume_frame)
                 resume_msg = resume_frame["data"]
@@ -68,8 +68,8 @@ def send_data(request, start, ui):
                 client_socket.RCVTIMEO = 1000
 
                 data = f.read(1024)
-            except socket.error:
-                print("Unable to reconnect")
+            except:
+                print("Unable to reconnect, terminating connection")
                 success = False
                 break
 
@@ -100,54 +100,87 @@ def send_data(request, start, ui):
     with open(helper.upload_connection_file, 'w') as outfile:
         json.dump(connections, outfile)
     semaphore.release()
-    print("Done sending =====================")
+    print("Done uploading")
 
 
 def receive_data(request):
-    client_socket = socket.socket()
 
-    client_socket.connect((request['ip'], request['port']))
+    context = zmq.Context()
+    client_socket = context.socket(zmq.PAIR)
+    client_socket.connect("tcp://" + request['ip'] + ":" + str(request['port']))
+
+    # receive start frame
+    frame = client_socket.recv()
+    frame = pickle.loads(frame)
 
     connected = True
     f = None
 
     # if file exists, resume upload, open in append mode, inform sender where it has stopped
     if os.path.isfile(request['shard_id']):
-        client_socket.send(bytes(str(os.path.getsize(request['shard_id'])), "UTF-8"))
+        file_size = os.path.getsize(request['shard_id'])
+        resume_frame = {"type": "resume", "data": file_size}
+        resume_frame = pickle.dumps(resume_frame)
+        client_socket.send(resume_frame)
+
         f = open(request['shard_id'], "ab")
-        print(f.tell())
-    # if file does not exist, start upload
+        print("Resume download from ", f.tell())
+
+    # if file does not exist, start download
     else:
+        print("Starting download")
         f = open(request['shard_id'], "wb")
 
+    client_socket.RCVTIMEO = 1000
     while True:
         try:
-            data = client_socket.recv(1024)
-            while data:
-                f.write(data)
-                data = client_socket.recv(1024)
-            f.close()
-            break
+            frame = client_socket.recv()
+            frame = pickle.loads(frame)
 
-        except socket.error:
-            # set connection status and recreate socket
+            if frame["type"] == "data":
+                # ack_frame = {"type": "ACK"}
+                # ack_frame = pickle.dumps(ack_frame)
+                # client_socket.send(ack_frame)
+                data = frame["data"]
+                f.write(data)
+
+            elif frame["type"] == "END":
+                f.close()
+                print("Download complete")
+                break
+
+        except:
+            print("Disconnected")
+            sleep(5)
+
             connected = False
-            print("connection lost... reconnecting")
-            while not connected:
-                # attempt to reconnect, otherwise sleep for 2 seconds
-                try:
-                    client_socket = socket.socket()
-                    client_socket.connect((request['ip'], request['port']))
-                    connected = True
-                    f.close()
-                    client_socket.send(bytes(str(os.path.getsize(request['shard_id'])), "UTF-8"))
-                    f = open(request['shard_id'], "ab")
-                    print("re-connection successful")
-                except socket.error:
-                    sleep(2)
-                    print("sleep")
+            try:
+                client_socket = context.socket(zmq.PAIR)
+                client_socket.connect("tcp://" + request['ip'] + ":" + str(request['port']))
+                client_socket.RCVTIMEO = 1000 * 60 * 60
+
+                # received start frame, reconnected to host
+                start_frame = client_socket.recv()
+                start_frame = pickle.loads(frame)
+                print("Reconnected Successfully")
+
+                # send host where it has received
+                f.close()
+                file_size = os.path.getsize(request['shard_id'])
+                resume_frame = {"type": "resume", "data": file_size}
+                resume_frame = pickle.dumps(resume_frame)
+                client_socket.send(resume_frame)
+                print("Resume download from ", file_size)
+
+                f = open(request['shard_id'], "ab")
+                client_socket.RCVTIMEO = 1000
+
+            except:
+                print("Unable to reconnect, terminating connection")
+                break
 
     client_socket.close()
+    f.close()
     # remove from text file
     connections = {}
     with open(helper.upload_connection_file) as json_file:
