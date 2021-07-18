@@ -226,10 +226,11 @@ def retrieve_original_file(key, file_metadata, read_size=helper.segment_size):
 
 
 def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_size):
-    pass
     # TODO: shards to be downloaded
-    # file_metadata = start_download()
-    # retrieve_original_file(key, file_metadata, read_size=helper.segment_size)
+    print(filename)
+    file_metadata = start_download(filename, ui)
+    print(file_metadata)
+    # retrieve_original_file(key, file_metadata, read_size)
 
 
 def read_transfer_file():
