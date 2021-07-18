@@ -112,6 +112,7 @@ def receive_data(request):
     # receive start frame
     frame = client_socket.recv()
     frame = pickle.loads(frame)
+    print("recieved start frame")
 
     connected = True
     f = None
@@ -178,6 +179,7 @@ def receive_data(request):
             except:
                 print("Unable to reconnect, terminating connection")
                 break
+
 
     client_socket.close()
     f.close()
