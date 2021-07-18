@@ -5,7 +5,7 @@ from .erasure_coding import encode, decode
 from .encryption import encrypt, decrypt
 from .helper import Helper
 from .decentorage import get_pending_file_info, start_download, worker_error_page
-from .file_transfer_user import send_data, add_connection, check_old_connections
+from .file_transfer_user import send_data, add_connection, check_old_connections, receive_data
 helper = Helper()
 
 
@@ -190,26 +190,30 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
     #    print(exc_type, filename, exc_tb.tb_lineno)
 
 
-def retrieve_original_file(key, file_metadata, read_size=helper.segment_size):
+def retrieve_original_file(key, info, read_size=helper.segment_size):
     """
     this function retrieve the file by decoding and decrypting different segments. Then combine segments into one file
+    :param info: file metadata dictionary contain data needed to retrieve file
     :param key: decryption key
-    :param file_metadata: file metadata dictionary contain data needed to retrieve file
     :param read_size: segment size
     """
-    if file_metadata['segments_count'] > 1:
-        segment_num = 0
-        while segment_num < file_metadata['segments_count']:
+    segments_count = len(info["segments"])
+    if segments_count > 1:
+        for segment_num, segment in enumerate(info["segments"]):
             segment_name = helper.segment_filename + '_' + str(segment_num)
-            decode(helper.shards_directory_path, helper.segments_directory_path, segment_num, file_metadata['k'])
+            print("-----------------Decoding Segment#" + str(segment_num) + "-----------------")
+            decode(helper.download_directory_path, helper.segments_directory_path, segment_num, segment['k'])
+            print("-----------------Decrypting Segment#" + str(segment_num) + "-----------------")
             decrypt(key, segment_name, segment_name + ".enc")
-            segment_num += 1
     else:
         segment_name = helper.segment_filename + '_0'
-        decode(helper.shards_directory_path, helper.segments_directory_path, 0, file_metadata['k'])
+        print("-----------------Decoding Segment#0-----------------")
+        decode(helper.download_directory_path, helper.segments_directory_path, 0, info["segments"][0]['k'])
+        print("-----------------Decoding Segment#0-----------------")
         decrypt(key, segment_name, segment_name + ".enc")
 
-    output = open(file_metadata['filename'], 'wb')
+    print("-----------------Retrieve file-----------------")
+    output = open(info['filename'], 'wb')
     parts = os.listdir(helper.segments_directory_path)
     parts.sort()
     for filename in parts:
@@ -222,15 +226,48 @@ def retrieve_original_file(key, file_metadata, read_size=helper.segment_size):
             output.write(file_bytes)
         file_obj.close()
     output.close()
-    print("Done retrieving file")
+    print("-----------------Done Retrieving File-----------------")
 
 
 def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_size):
-    # TODO: shards to be downloaded
-    print(filename)
-    file_metadata = start_download(filename, ui)
-    print(file_metadata)
-    # retrieve_original_file(key, file_metadata, read_size)
+    print("-----------------Request Download from Decentorage ----------------")
+    segments = start_download(filename, ui)
+    if segments:
+        for segment in segments:
+            for shard in segment['shards']:
+                req = {'type': 'download',
+                       'port': int(shard['port']),
+                       'shard_id': shard['shard_id'],
+                       'auth': shard['auth'],
+                       'ip': shard['ip_address']
+                       }
+                print("-----------------Downloading Shard#"+str(shard['shard_no'])+" in Segment#"+
+                      str(shard['segment_no'])+"----------------")
+                # Add connection
+                add_connection(req)
+                # Send data to storage node
+                receive_data(req)
+                print("-----------------Download Done ----------------")
+    else:
+        return
+    try:
+        print("-----------------Shards Renaming----------------")
+        for segment in segments:
+            for shard in segment['shards']:
+                os.rename(shard['shard_id'], helper.shard_filename + "_" + str(shard['segment_no']) + "." +
+                          str(shard['shard_no']) + "_" + str(segment["m"]))
+        print("-----------------Shards Renamed-----------------")
+    except Exception as e:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        function_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print("Error in renaming shards", exc_type, function_name, exc_tb.tb_lineno)
+        return
+    file_metadata = {
+        "filename": filename,
+        "segments": segments
+    }
+    print("-----------------Start retrieving-----------------")
+    retrieve_original_file(key, file_metadata, read_size)
 
 
 def read_transfer_file():

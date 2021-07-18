@@ -27,6 +27,7 @@ class ShowFiles(QtWidgets.QWidget):
     def back_to_main(self):
         self.index = None
         self.key = None
+        self.ui.show_files_decryption_key_line_edit.setText(None)
         self.back_to_main_switch.emit()
 
     def show_user_files(self):
