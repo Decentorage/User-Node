@@ -108,86 +108,86 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
     :param chunk_size: segment size
     :param ui: ui object
     """
-    try:
-        print("process file function")
-        # Get needed data to start processing and uploading.
-        transfer_obj = read_transfer_file()
-        response = get_pending_file_info(ui)
-        file_size = os.stat(from_file).st_size
-        file_size_decentorage, segments_metadata = response['file_size'], response['segments']
+    # try:
+    print("process file function")
+    # Get needed data to start processing and uploading.
+    transfer_obj = read_transfer_file()
+    response = get_pending_file_info(ui)
+    file_size = os.stat(from_file).st_size
+    file_size_decentorage, segments_metadata = response['file_size'], response['segments']
 
-        # First time to upload.
-        if transfer_obj['start_flag']:
-            print("First Upload")
-            helper.reset_shards()
-            helper.reset_directories()
-            transfer_obj['segments'] = segments_metadata
-            # Add segment state
-            for segment_index, segment in enumerate(segments_metadata):
-                transfer_obj['segments'][segment_index]['done_uploading'] = False
-                transfer_obj['segments'][segment_index]['processed'] = False
-            transfer_obj['key'] = key
-            transfer_obj['start_flag'] = False
-            save_transfer_file(transfer_obj)
-        else:   # Retry uploading on pending connections
-            print("Resume Upload")
-            # check_old_connections(ui)
-            if transfer_obj['key']:
-                key = transfer_obj['key']
-            else:
-                return
-
-        # File path has been changed
-        if file_size != file_size_decentorage:
-            print("Invalid file")
+    # First time to upload.
+    if transfer_obj['start_flag']:
+        print("First Upload")
+        helper.reset_shards()
+        helper.reset_directories()
+        transfer_obj['segments'] = segments_metadata
+        # Add segment state
+        for segment_index, segment in enumerate(segments_metadata):
+            transfer_obj['segments'][segment_index]['done_uploading'] = False
+            transfer_obj['segments'][segment_index]['processed'] = False
+        transfer_obj['key'] = key
+        transfer_obj['start_flag'] = False
+        save_transfer_file(transfer_obj)
+    else:   # Retry uploading on pending connections
+        print("Resume Upload")
+        # check_old_connections(ui)
+        if transfer_obj['key']:
+            key = transfer_obj['key']
+        else:
             return
 
-        # File size is smaller than chunk size, 1 segment is needed
-        if file_size < chunk_size:
-            print("Segment", "Start Uploading.")
-            process_segment(from_file, key, 0, transfer_obj, ui)
-            helper.reset_directories()
-            transfer_obj['segments'][0]['done_uploading'] = True
-            save_transfer_file(transfer_obj)
-            print("Segment", "Done Uploading. Cleaning up ....")
-            try:
-                os.remove(helper.transfer_file)
-            except:
-                raise Exception("Error Occurred while deleting transfer file.")
-            print("Done Processing and uploading file.")
-            return
-        filename = os.path.basename(from_file)
-        segment_num = 0
-        input_file = open(from_file, 'rb')
-        while 1:
-            chunk = input_file.read(chunk_size)         # get next part <= chunk size
-            if not chunk:                               # eof=empty string from read
-                break
-            print("Segment#", segment_num, "------START------")
-            if not transfer_obj['segments'][segment_num]['done_uploading']:
-                print("Segment#", segment_num, "Start Uploading.")
-                file_segment_path = helper.segments_directory_path + '/' + str(segment_num) + '_' + filename
-                file_segment = open(file_segment_path, 'wb')
-                file_segment.write(chunk)
-                process_segment(file_segment_path, key, segment_num, transfer_obj, ui)
-                file_segment.close()
-                helper.reset_directories()
-                transfer_obj['segments'][segment_num]['done_uploading'] = True
-                save_transfer_file(transfer_obj)
-                print("Segment#", segment_num, "Done Uploading. Cleaning up ....")
-            else:
-                print("Segment#", segment_num, "Already Uploaded(Skipped).")
-            segment_num = segment_num + 1
+    # File path has been changed
+    if file_size != file_size_decentorage:
+        print("Invalid file")
+        return
+
+    # File size is smaller than chunk size, 1 segment is needed
+    if file_size < chunk_size:
+        print("Segment", "Start Uploading.")
+        process_segment(from_file, key, 0, transfer_obj, ui)
+        helper.reset_directories()
+        transfer_obj['segments'][0]['done_uploading'] = True
+        save_transfer_file(transfer_obj)
+        print("Segment", "Done Uploading. Cleaning up ....")
         try:
             os.remove(helper.transfer_file)
         except:
             raise Exception("Error Occurred while deleting transfer file.")
         print("Done Processing and uploading file.")
-        input_file.close()
-    except Exception as e:
-        exc_type, exc_obj, exc_tb = sys.exc_info()
-        filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        print(exc_type, filename, exc_tb.tb_lineno)
+        return
+    filename = os.path.basename(from_file)
+    segment_num = 0
+    input_file = open(from_file, 'rb')
+    while 1:
+        chunk = input_file.read(chunk_size)         # get next part <= chunk size
+        if not chunk:                               # eof=empty string from read
+            break
+        print("Segment#", segment_num, "------START------")
+        if not transfer_obj['segments'][segment_num]['done_uploading']:
+            print("Segment#", segment_num, "Start Uploading.")
+            file_segment_path = helper.segments_directory_path + '/' + str(segment_num) + '_' + filename
+            file_segment = open(file_segment_path, 'wb')
+            file_segment.write(chunk)
+            process_segment(file_segment_path, key, segment_num, transfer_obj, ui)
+            file_segment.close()
+            helper.reset_directories()
+            transfer_obj['segments'][segment_num]['done_uploading'] = True
+            save_transfer_file(transfer_obj)
+            print("Segment#", segment_num, "Done Uploading. Cleaning up ....")
+        else:
+            print("Segment#", segment_num, "Already Uploaded(Skipped).")
+        segment_num = segment_num + 1
+    try:
+        os.remove(helper.transfer_file)
+    except:
+        raise Exception("Error Occurred while deleting transfer file.")
+    print("Done Processing and uploading file.")
+    input_file.close()
+    #except Exception as e:
+    #    exc_type, exc_obj, exc_tb = sys.exc_info()
+    #    filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+    #    print(exc_type, filename, exc_tb.tb_lineno)
 
 
 def retrieve_original_file(key, file_metadata, read_size=helper.segment_size):
@@ -226,8 +226,9 @@ def retrieve_original_file(key, file_metadata, read_size=helper.segment_size):
 
 
 def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_size):
+    pass
     # TODO: shards to be downloaded
-    file_metadata = start_download()
+    # file_metadata = start_download()
     # retrieve_original_file(key, file_metadata, read_size=helper.segment_size)
 
 

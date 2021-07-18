@@ -3,6 +3,7 @@ from utils import get_user_state, process_file
 import time
 import json
 import os
+import webbrowser
 
 
 class UploadMain(QtWidgets.QWidget):
@@ -15,6 +16,7 @@ class UploadMain(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
         self.ui = ui
         self.helper = helper
+        self.url = "www.google.com"
         self.filename = None
         self.key = None
         # Connectors
@@ -22,6 +24,7 @@ class UploadMain(QtWidgets.QWidget):
         self.ui.upload_main_initiate_contract_pb.clicked.connect(self.set_contract_details)
         self.ui.upload_main_start_uploading_pb.clicked.connect(self.start_uploading_switch.emit)
         self.ui.upload_main_encryption_key_line_edit.textChanged[str].connect(self.check_start_upload_conditions)
+        self.ui.upload_main_request_contract_pb.clicked.connect(self.request_contract)
 
     def back_to_main(self):
         self.back_to_main_switch.emit()
@@ -30,6 +33,9 @@ class UploadMain(QtWidgets.QWidget):
         self.browse()
         if self.filename:
             self.contract_details_switch.emit(self.filename)
+
+    def request_contract(self):
+        webbrowser.open_new(self.url)
 
     def browse(self):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName()

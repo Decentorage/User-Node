@@ -2,6 +2,8 @@ import socket
 from time import sleep
 import json
 import os
+import zmq
+import pickle
 from .audits import generate_audits
 from .decentorage import shard_done_uploading
 helper = None
@@ -15,44 +17,68 @@ def init_file_transfer_user(helper_obj, semaphore_obj):
 
 
 def send_data(request, start, ui):
-    client_socket = socket.socket()
-    client_socket.connect((request['ip'], request['port']))
+    context = zmq.Context()
+    client_socket = context.socket(zmq.PAIR)
+    client_socket.connect("tcp://" + request['ip'] + ":" + str(request['port']))
 
-    # keep track of connection status
-    connected = True
+    frame = client_socket.recv()
+    frame = pickle.loads(frame)
+
+    # keep track of sending status
+    success = True
     print("connected to server")
     f = open(request['shard_id'], "rb")
     if not start:
-        resume_msg = client_socket.recv(1024).decode("UTF-8")
+        resume_frame = client_socket.recv()
+        resume_frame = pickle.loads(resume_frame)
+        resume_msg = resume_frame["data"]
         print(resume_msg)
-        f.seek(int(resume_msg), 0)
+        f.seek(resume_msg, 0)
 
     data = f.read(1024)
-
+    client_socket.RCVTIMEO = 1000
     while data:
         try:
-            client_socket.send(data)
+            data_frame = {"type": "data", "data": data}
+            data_frame = pickle.dumps(data_frame)
+            client_socket.send(data_frame)
+            ack_frame = client_socket.recv()
             data = f.read(1024)
-        except socket.error:
+
+        except:
             print("disconnected")
             connected = False
-            while not connected:
-                try:
-                    client_socket = socket.socket()
-                    # get from receiver where it has stopped
-                    client_socket.connect((request['ip'], request['port']))
-                    connected = True
-                    resume_msg = client_socket.recv(1024).decode("UTF-8")
-                    print(resume_msg)
-                    f.seek(int(resume_msg), 0)
-                    data = f.read(1024)
-                    print("reconnecting")
-                except socket.error:
-                    sleep(2)
-                    print("sleep")
+            try:
+                client_socket = context.socket(zmq.PAIR)
+                client_socket.connect("tcp://" + request['ip'] + ":" + str(request['port']))
+                client_socket.RCVTIMEO = 1000*60*60
 
-    client_socket.send(bytes("END", "UTF-8"))
-    print("sending end connection to port", request['ip'], request['port'])
+                # received start frame, reconnected to host
+                start_frame = client_socket.recv()
+                start_frame = pickle.loads(frame)
+                print("Reconnected Successfully")
+
+                # get from host where it has received
+                connected = True
+                resume_frame = client_socket.recv()
+                resume_frame = pickle.loads(resume_frame)
+                resume_msg = resume_frame["data"]
+                print(resume_msg)
+                f.seek(resume_msg, 0)
+                client_socket.RCVTIMEO = 1000
+
+                data = f.read(1024)
+            except socket.error:
+                print("Unable to reconnect")
+                success = False
+                break
+
+    if success:
+        end_frame = {"type": "END"}
+        end_frame = pickle.dumps(end_frame)
+        client_socket.send(end_frame)
+        print("sending end connection to port", request['ip'], request['port'])
+
     f.close()
     client_socket.close()
 
