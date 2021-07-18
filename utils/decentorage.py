@@ -179,7 +179,7 @@ def start_download(filename, ui):
         return False
     finally:
         if response.status_code == 200:
-            return response.json()
+            return response.json()["segments"]
         elif response.status_code == 404 or response.status_code == 405:
             worker_error_page("Error", response.text(), ui)
             return False
