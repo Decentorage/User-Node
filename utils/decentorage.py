@@ -114,7 +114,6 @@ def create_file(contract_details, ui):
             worker_error_page("Error", "This file already stored.", ui)
             return False
         else:
-            print("HERE1")
             ui.stackedWidget.setCurrentWidget(ui.upload_main_page)
             return False
 
@@ -168,10 +167,10 @@ def start_download(filename, ui):
         token = helper.token
         if token:
             response = requests.post(helper.host_url + helper.client_url_prefix + 'startDownload',
-                                    json={
+                                     json={
                                         "filename": filename
-                                    },
-                                    headers={"token": token})
+                                     },
+                                     headers={"token": token})
         else:  # Get user files.
             worker_error_page("Please Login again", "", ui, ui.login_page)
             return False

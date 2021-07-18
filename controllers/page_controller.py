@@ -49,6 +49,7 @@ class PageController:
         self.upload_main.contract_details_switch.connect(self.switch_contract_details)
         self.upload_main.start_uploading_switch.connect(lambda: self.switch_start_upload("Uploading file.."))
         self.contract_details.go_to_upload_main_switch.connect(self.switch_upload_main)
+        self.contract_details.request_contract_switch.connect(self.switch_create_contract)
 
         if os.path.exists(self.helper.transfer_file):
             with open(self.helper.transfer_file) as json_file:
@@ -79,6 +80,9 @@ class PageController:
 
     def switch_start_upload(self, msg):
         call_worker(self.upload_main.start_uploading, self.ui, self.ui.main_page, msg)
+
+    def switch_create_contract(self):
+        call_worker(self.contract_details.request_contract, self.ui, self.ui.upload_main_page, "Creating contract..")
 
     def logout(self):
         try:

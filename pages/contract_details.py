@@ -7,6 +7,7 @@ import json
 class ContractDetails(QtWidgets.QWidget):
 
     go_to_upload_main_switch = QtCore.pyqtSignal()
+    request_contract_switch = QtCore.pyqtSignal()
 
     def __init__(self, ui, helper):
         QtWidgets.QWidget.__init__(self)
@@ -16,7 +17,7 @@ class ContractDetails(QtWidgets.QWidget):
         self.file_path = None
         # Connectors
         self.ui.contract_details_cancel_pb.clicked.connect(self.cancel_contract_details)
-        self.ui.contract_details_request_pb.clicked.connect(self.request_contract)
+        self.ui.contract_details_request_pb.clicked.connect(self.request_contract_switch.emit)
         self.ui.contract_details_download_counts_spin_box.valueChanged.connect(self.calculate_price)
         self.ui.contract_details_months_spin_box.valueChanged.connect(self.calculate_price)
 
