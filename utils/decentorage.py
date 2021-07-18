@@ -114,7 +114,6 @@ def create_file(contract_details, ui):
             worker_error_page("Error", "This file already stored.", ui)
             return False
         else:
-            print("HERE1")
             ui.stackedWidget.setCurrentWidget(ui.upload_main_page)
             return False
 
@@ -143,12 +142,12 @@ def shard_done_uploading(shard_id, audits, ui):
     try:
         token = helper.token
         if token:
-            response = requests.get(helper.host_url + helper.client_url_prefix + 'shardDoneUploading',
-                                    json={
-                                        "shard_id": shard_id,
-                                        "audits": audits
-                                    },
-                                    headers={"token": token})
+            response = requests.post(helper.host_url + helper.client_url_prefix + 'shardDoneUploading',
+                                     json={
+                                            "shard_id": os.path.basename(shard_id),
+                                            "audits": audits
+                                        },
+                                     headers={"token": token})
         else:  # Get user files.
             worker_error_page("Please Login again", "", ui, ui.login_page)
             return False
@@ -167,11 +166,11 @@ def start_download(filename, ui):
     try:
         token = helper.token
         if token:
-            response = requests.get(helper.host_url + helper.client_url_prefix + 'startDownload',
-                                    json={
+            response = requests.post(helper.host_url + helper.client_url_prefix + 'startDownload',
+                                     json={
                                         "filename": filename
-                                    },
-                                    headers={"token": token})
+                                     },
+                                     headers={"token": token})
         else:  # Get user files.
             worker_error_page("Please Login again", "", ui, ui.login_page)
             return False
