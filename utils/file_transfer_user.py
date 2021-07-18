@@ -51,7 +51,7 @@ def send_data(request, start, ui):
             try:
                 client_socket = context.socket(zmq.PAIR)
                 client_socket.connect("tcp://" + request['ip'] + ":" + str(request['port']))
-                client_socket.SNDTIMEO = 1000*60*60
+                client_socket.RCVTIMEO = 1000*60*60
 
                 # received start frame, reconnected to host
                 start_frame = client_socket.recv()
