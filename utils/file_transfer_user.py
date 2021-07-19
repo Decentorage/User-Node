@@ -123,13 +123,13 @@ def receive_data(request):
         resume_frame = pickle.dumps(resume_frame)
         client_socket.send(resume_frame)
 
-        f = open(os.path.join(helper.download_directory_path, request['shard_id']), "ab")
+        f = open(os.path.join(helper.shards_directory_path, request['shard_id']), "ab")
         print("Resume download from ", f.tell())
 
     # if file does not exist, start download
     else:
         print("Starting download")
-        f = open(os.path.join(helper.download_directory_path, request['shard_id']), "wb")
+        f = open(os.path.join(helper.shards_directory_path, request['shard_id']), "wb")
 
     client_socket.RCVTIMEO = 1000
     while True:
@@ -172,13 +172,12 @@ def receive_data(request):
                 client_socket.send(resume_frame)
                 print("Resume download from ", file_size)
 
-                f = open(os.path.join(helper.download_directory_path, request['shard_id']), "ab")
+                f = open(os.path.join(helper.shards_directory_path, request['shard_id']), "ab")
                 client_socket.RCVTIMEO = 1000
 
             except:
                 print("Unable to reconnect, terminating connection")
                 break
-
 
     client_socket.close()
     f.close()
