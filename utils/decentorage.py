@@ -162,6 +162,23 @@ def shard_done_uploading(shard_id, audits, ui):
             return False
 
 
+def file_done_uploading(ui):
+    try:
+        token = helper.token
+        if token:
+            response = requests.get(helper.host_url + helper.client_url_prefix + 'fileDoneUploading',
+                                    headers={"token": token})
+    except:
+        worker_error_page("Error", helper.server_not_responding, ui)
+        return False
+    finally:
+        if response.status_code == 200:
+            return True
+        else:
+            worker_error_page("Please Login again", "", ui, ui.login_page)
+            return False
+
+
 def start_download(filename, ui):
     try:
         token = helper.token

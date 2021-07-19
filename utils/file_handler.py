@@ -4,7 +4,7 @@ import sys
 from .erasure_coding import encode, decode
 from .encryption import encrypt, decrypt
 from .helper import Helper
-from .decentorage import get_pending_file_info, start_download, worker_error_page
+from .decentorage import get_pending_file_info, start_download, file_done_uploading
 from .file_transfer_user import send_data, add_connection, check_old_connections, receive_data
 helper = Helper()
 
@@ -183,6 +183,7 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
     except:
         raise Exception("Error Occurred while deleting transfer file.")
     print("Done Processing and uploading file.")
+    file_done_uploading(ui)
     input_file.close()
     #except Exception as e:
     #    exc_type, exc_obj, exc_tb = sys.exc_info()
