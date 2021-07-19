@@ -232,9 +232,6 @@ def retrieve_original_file(key, info, read_size=helper.segment_size):
 
 
 def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_size):
-    print("-----------------Cleaning up-----------------")
-    # helper.reset_directories()
-    # helper.reset_shards()
     print("-----------------Request Download from Decentorage ----------------")
     segments = start_download(filename, ui)
     if segments:
@@ -249,9 +246,9 @@ def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_siz
                 print("-----------------Downloading Shard#"+str(shard['shard_no'])+" in Segment#"+
                       str(shard['segment_no'])+"----------------")
                 # Add connection
-                # add_connection(req)
+                add_connection(req)
                 # Send data to storage node
-                # receive_data(req)
+                receive_data(req)
                 print("-----------------Download Done ----------------")
     else:
         return
@@ -280,6 +277,10 @@ def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_siz
     }
     print("-----------------Start retrieving-----------------")
     retrieve_original_file(key, file_metadata, read_size)
+    print("-----------------Done retrieving-----------------")
+    print("-----------------Cleaning up-----------------")
+    helper.reset_directories()
+    helper.reset_shards()
 
 
 def read_transfer_file():
