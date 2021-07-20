@@ -131,11 +131,11 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
         save_transfer_file(transfer_obj)
     else:   # Retry uploading on pending connections
         print("Resume Upload")
-        # check_old_connections(ui)
         if transfer_obj['key']:
             key = transfer_obj['key']
         else:
             return
+        check_old_connections(ui)
 
     # File path has been changed
     if file_size != file_size_decentorage:
@@ -233,7 +233,15 @@ def retrieve_original_file(key, info, read_size=helper.segment_size):
 
 
 def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_size):
+    """
+    This function download shards needed to retrieve the file and then call retrieve original file function
+    :param filename: the name of the file to be downloaded.
+    :param key: the decryption key that will be used to decrypt the files.
+    :param ui: ui object.
+    :param read_size: segment size
+    """
     print("-----------------Request Download from Decentorage ----------------")
+    # get information of the shards to download them
     segments = start_download(filename, ui)
     if segments:
         for segment in segments:
@@ -254,14 +262,10 @@ def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_siz
     else:
         return
     try:
+        # rename the shards to their original names.
         print("-----------------Shards Renaming----------------")
         for segment in segments:
             for shard in segment['shards']:
-                print(os.path.join(helper.shards_directory_path, shard['shard_id']),
-                      os.path.join(helper.shards_directory_path,
-                                   helper.shard_filename + "_" + str(shard['segment_no']) + "." +
-                                   str(shard['shard_no']) + "_" + str(segment["m"])))
-
                 os.rename(os.path.join(helper.shards_directory_path, shard['shard_id']),
                           os.path.join(helper.shards_directory_path,
                                        helper.shard_filename + "_" + str(shard['segment_no']) + "." +
@@ -272,6 +276,7 @@ def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_siz
         function_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         print("Error in renaming shards", exc_type, function_name, exc_tb.tb_lineno)
         return
+    # prepare file metadata dictionary needed by retrieve original file function.
     file_metadata = {
         "filename": filename,
         "segments": segments
@@ -285,17 +290,25 @@ def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_siz
 
 
 def read_transfer_file():
+    """
+    Read transfer file that is used to store information about the ongoing transfer
+    :return: transfer dictionary
+    """
     if not os.path.exists(helper.transfer_file):
         raise Exception('Cache file deleted')
     else:
         outfile = open(helper.transfer_file, 'r')
-        transfer_obj = json.load(outfile)
-        return transfer_obj
+        transfer_dict = json.load(outfile)
+        return transfer_dict
 
 
-def save_transfer_file(transfer_obj):
+def save_transfer_file(transfer_dict):
+    """
+    This function save the data in transfer file
+    :param transfer_dict: transfer dictionary that will be saved
+    """
     if not os.path.exists(helper.transfer_file):
         raise Exception('Cache file deleted')
     else:
         outfile = open(helper.transfer_file, 'w')
-        json.dump(transfer_obj, outfile)
+        json.dump(transfer_dict, outfile)

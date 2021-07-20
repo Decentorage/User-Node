@@ -5,13 +5,21 @@ helper = None
 
 
 def init_decentorage(helper_obj):
+    """
+    This function initializes decentorage module.
+    :param helper_obj: instance of the helper object.
+    """
     global helper
     helper = helper_obj
 
-# TODO: implement login redirect
-
 
 def user_login(username, password):
+    """
+    This function is used to do client login.
+    :param username: username of the client.
+    :param password: password of the client.
+    :return: return response to the client.
+    """
     try:
         response = requests.post(helper.host_url + helper.client_url_prefix + 'signin',
                                  json={
@@ -30,6 +38,12 @@ def user_login(username, password):
 
 
 def get_price(contract_details, ui):
+    """
+    This function is used to get the price of a specific contract details.
+    :param contract_details: dictionary holds the contract details.
+    :param ui: ui object
+    :return: price
+    """
     try:
         token = helper.token
         if token:
@@ -55,6 +69,11 @@ def get_price(contract_details, ui):
 
 
 def get_user_files(ui):
+    """
+    This function returns user stored files in decentorage to download them.
+    :param ui: ui object.
+    :return:user stored files.
+    """
     try:
         token = helper.token
         if token:
@@ -75,6 +94,11 @@ def get_user_files(ui):
 
 
 def get_user_state(ui):
+    """
+    This function gets the user current state
+    :param ui: ui object
+    :return: state
+    """
     try:
         token = helper.token
         if token:
@@ -95,6 +119,12 @@ def get_user_state(ui):
 
 
 def create_file(contract_details, ui):
+    """
+
+    :param contract_details: the details of the contract of a specific file.
+    :param ui: ui object.
+    :return: True if file is created successfully and false if any problem occurred.
+    """
     try:
         token = helper.token
         if token:
@@ -119,6 +149,11 @@ def create_file(contract_details, ui):
 
 
 def get_pending_file_info(ui):
+    """
+    This function gets pending file information
+    :param ui:
+    :return: information
+    """
     try:
         token = helper.token
         if token:
@@ -139,6 +174,12 @@ def get_pending_file_info(ui):
 
 
 def shard_done_uploading(shard_id, audits, ui):
+    """
+    This function is called when the shard is uploaded at the host.
+    :param shard_id: the shard id that is uploaded.
+    :param audits: the audits of this shard.
+    :param ui: ui object.
+    """
     try:
         token = helper.token
         if token:
@@ -163,6 +204,10 @@ def shard_done_uploading(shard_id, audits, ui):
 
 
 def file_done_uploading(ui):
+    """
+    This function is called when the file is uploaded as a whole.
+    :param ui: ui object.
+    """
     try:
         token = helper.token
         if token:
@@ -180,6 +225,12 @@ def file_done_uploading(ui):
 
 
 def start_download(filename, ui):
+    """
+    This function is called when the user wants to download a file.
+    :param filename: the name of the file that will be downloaded.
+    :param ui: ui object.
+    :return: information needed when downloading shards.
+    """
     try:
         token = helper.token
         if token:
@@ -206,6 +257,13 @@ def start_download(filename, ui):
 
 
 def worker_error_page(title, body, gui, target=None):
+    """
+    Function that show errors to the user.
+    :param title: title of the error.
+    :param body: body of the error.
+    :param gui: gui object.
+    :param target: target page.
+    """
     gui.error_body.setText(body)
     gui.error_title.setText(title)
     if target:
