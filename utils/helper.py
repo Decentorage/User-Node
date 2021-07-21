@@ -151,7 +151,7 @@ class Helper:
         :return: transfer dictionary
         """
         if not os.path.exists(self.transfer_file):
-            raise Exception('Cache file deleted')
+            return None
         else:
             outfile = open(self.transfer_file, 'r')
             transfer_obj = json.load(outfile)
