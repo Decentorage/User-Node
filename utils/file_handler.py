@@ -10,10 +10,11 @@ from .file_transfer_user import send_data, add_connection, check_old_connections
 helper = Helper()
 
 
-def process_segment(from_file, key, segment_number, transfer_obj, ui):
+def process_segment(from_file, key, segment_number, transfer_obj, ui, progress_bar):
     """
     This function takes a segment then start to process it if it's not already processed, and start uploading shard
     by shard
+    :param progress_bar: progress bar to show the percentage of upload
     :param from_file: segment file that will be processed
     :param key: encryption key used to encrypt segment
     :param segment_number: segment number in a file
@@ -89,6 +90,8 @@ def process_segment(from_file, key, segment_number, transfer_obj, ui):
             # Send data to storage node
             send_data(req, True, ui)
 
+            progress_bar(transfer_obj['segments'][segment_number]['shard_size'])
+
             # Save new state of the shard
             # transfer_obj['segments'][segment_number]['shards'][shard_index]['done_uploading'] = True
             # save_transfer_file(transfer_obj)
@@ -101,9 +104,10 @@ def process_segment(from_file, key, segment_number, transfer_obj, ui):
     # helper.reset_shards()
 
 
-def process_file(from_file, key, ui, chunk_size=helper.segment_size):
+def process_file(from_file, key, ui, progress_bar, chunk_size=helper.segment_size):
     """
     This function divides the file into segments to process each segment separately
+    :param progress_bar: progress bar to show the percentage of upload
     :param from_file: input file that will be uploaded
     :param key: encryption key
     :param chunk_size: segment size
@@ -116,6 +120,9 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
     response = get_pending_file_info(ui)
     file_size = os.stat(from_file).st_size
     file_size_decentorage, segments_metadata = response['file_size'], response['segments']
+
+    # set progress of progress bar
+    progress_bar(transfer_obj['progress'])
 
     # First time to upload.
     if transfer_obj['start_flag']:

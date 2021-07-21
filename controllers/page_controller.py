@@ -80,7 +80,11 @@ class PageController:
                     self.ui.contract_details_page, "loading File details..")
 
     def switch_start_upload(self, msg):
-        call_worker(self.upload_main.start_uploading, self.ui, self.ui.main_page, msg)
+        self.ui.progress_bar_page_label.setText(msg)
+        self.ui.stackedWidget.setCurrentWidget(self.ui.progress_bar_page)
+        self.ui.progress_bar_page_progress_bar.setValue(0)
+        call_worker(lambda: self.upload_main.start_uploading(ProgressBar(self.ui.progress_bar_page_progress_bar)),
+                    self.ui)
 
     def switch_create_contract(self):
         call_worker(self.contract_details.request_contract, self.ui, self.ui.upload_main_page, "Creating contract..")

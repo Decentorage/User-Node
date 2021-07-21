@@ -11,7 +11,7 @@ class ProgressBar(object):
         self.progress_signal_emitter = self.ProgressSignalEmitter()
 
     def set_size(self, size):
-        self.file_size = size
+        self.file_size = size / 1024
         self._progress_bar.setRange(0, self.file_size)
 
     class ProgressSignalEmitter(QObject):
@@ -23,5 +23,5 @@ class ProgressBar(object):
 
     def __call__(self, bytes_amount):
         with self._lock:
-            self._seen_so_far += bytes_amount
+            self._seen_so_far += (bytes_amount / 1024)
             self.progress_signal_emitter.emit_trigger(self._progress_bar, self._seen_so_far)

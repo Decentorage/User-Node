@@ -41,11 +41,13 @@ class UploadMain(QtWidgets.QWidget):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName()
         self.filename = filename
 
-    def start_uploading(self):
+    def start_uploading(self, progress_bar):
         if self.key:
             with open(self.helper.transfer_file) as json_file:
-                file_path = json.load(json_file)['file_path']
-            process_file(file_path, self.key, self.ui)
+                transfer_obj = json.load(json_file)
+                file_path = transfer_obj['file_path']
+                progress_bar.set_size(transfer_obj['total_size_to_upload'])
+            process_file(file_path, self.key, self.ui, progress_bar)
 
     def poll_state(self):
         self.filename = None
