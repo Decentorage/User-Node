@@ -1,6 +1,7 @@
 import os
 import glob
 import math
+import json
 from psutil import virtual_memory
 
 
@@ -15,14 +16,16 @@ class Helper:
         self.segments_directory_path = os.path.realpath("data/segments")
         self.downloaded_output = os.path.realpath("data/output data")
         self.encryption_directory = os.path.realpath("data/encrypted")
-
-        self.icon_path = os.path.realpath("gui/resources/decentorage_icon.png")
-        self.shard_filename = "shard"
-        self.segment_filename = "segment"
         self.cache_file = os.path.realpath("data/cache/decentorage_cache")
         self.transfer_file = os.path.realpath("data/cache/decentorage_transfer.json")
         self.upload_connection_file = os.path.realpath("data/cache/connections.txt")
-        self.host_url = "http://192.168.1.3:5000/"
+        self.icon_path = os.path.realpath("gui/resources/decentorage_icon.png")
+        self.shard_filename = "shard"
+        self.segment_filename = "segment"
+        self.send_chunk_size = int(10 * self.megabyte)
+
+        # define some parameters used through the application
+        self.host_url = "http://192.168.1.10:5000/"
         self.client_url_prefix = 'user/'
         self.server_not_responding = "Check your internet connection"
         self.erasure_factor = 1
@@ -42,7 +45,7 @@ class Helper:
 
         # mem = virtual_memory()
         # self.segment_size = math.floor(mem - int(2 * self.gigabyte))
-        self.segment_size = int(600 * self.megabyte)                             # temporary value for test purposes
+        self.segment_size = int(200 * self.megabyte)                             # temporary value for test purposes
 
         # create directories if not exist.
         if not os.path.exists(self.shards_directory_path):
@@ -55,11 +58,16 @@ class Helper:
             os.makedirs(self.downloaded_output)
 
     def get_encryption_file_path(self, filename):
+        """
+        This is a utility function to get the path of the encrypted file
+        :param filename: the name of the encrypted file
+        :return: encrypted file path
+        """
         return os.path.realpath(self.encryption_directory + "/" + filename + ".enc")
 
     def reset_directories(self):
         """
-        Delete content of temporary directories
+        Delete content of temporary directories used in cleaning up the working space
         """
         files = glob.glob(self.segments_directory_path + '/*')
         for f in files:
@@ -69,6 +77,9 @@ class Helper:
             os.remove(f)
 
     def reset_shards(self):
+        """
+        Delete shards used in cleaning up the working space
+        """
         files = glob.glob(self.shards_directory_path + '/*')
         for f in files:
             os.remove(f)
@@ -88,8 +99,7 @@ class Helper:
 
     def get_token(self):
         """
-        return cached token.
-        :return: token or none if no token exits.
+        Get cached token from file and save it to be used in the application requests.
         """
         try:
             cached_file = open(self.cache_file, 'r')
@@ -98,24 +108,62 @@ class Helper:
             pass
 
     def get_erasure_coding_parameters(self, file_size):
+        """
+        Get k and m of the file that will be used in erasure coding
+        :param file_size: the size of the input file
+        :return: k and m
+        """
         file_size = file_size / 1024.0  # KB
         shard_size = 8  # KB
         while file_size / shard_size > self.minimum_data_shard:
             shard_size = shard_size * 2
 
-        k = math.ceil(file_size / shard_size)  # number of data shards
+        # k: number of data shards
+        k = math.ceil(file_size / shard_size)
+        # m: total number of shards
         m = self.erasure_factor + k
         return k, m
 
     def get_file_metadata(self, file_size):
+        """
+        This function returns the file metadata needed by decentorage to save it
+        :param file_size: size of the file
+        :return: metadata of the file
+        """
+        # initialize the file metadata with empty segments array and their count
         file_metadata = {'segments': [], 'segments_count': math.ceil(int(file_size) / self.segment_size)}
+        # append each segment parameters.
         for segment_index in range(file_metadata['segments_count'] - 1):
             k, m = self.get_erasure_coding_parameters(self.segment_size)
             segment = {'k': k, 'm': m, 'shard_size': math.ceil(self.segment_size/k)}
             file_metadata['segments'].append(segment)
+        # append last segment details in the metadata
         k, m = self.get_erasure_coding_parameters(file_size -
                                                   self.segment_size*(file_metadata['segments_count'] - 1))
         segment = {'k': k, 'm': m, 'shard_size': math.ceil(
             math.ceil(file_size - self.segment_size*(file_metadata['segments_count'] - 1))/k)}
         file_metadata['segments'].append(segment)
         return file_metadata['segments'], file_metadata['segments_count']
+
+    def read_transfer_file(self):
+        """
+        Read transfer file that is used to store information about the ongoing transfer
+        :return: transfer dictionary
+        """
+        if not os.path.exists(self.transfer_file):
+            raise Exception('Cache file deleted')
+        else:
+            outfile = open(self.transfer_file, 'r')
+            transfer_obj = json.load(outfile)
+            return transfer_obj
+
+    def save_transfer_file(self, transfer_dict):
+        """
+        This function save the data in transfer file
+        :param transfer_dict: transfer dictionary that will be saved
+        """
+        if not os.path.exists(self.transfer_file):
+            raise Exception('Cache file deleted')
+        else:
+            outfile = open(self.transfer_file, 'w')
+            json.dump(transfer_dict, outfile)

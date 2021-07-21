@@ -66,7 +66,8 @@ class ShowFiles(QtWidgets.QWidget):
         self.index = self.ui.show_files_list_widget.currentRow() - 1
         self.check_download_conditions()
 
-    def download(self):
+    def download(self, progress_bar):
         print("Downloading", self.index, self.files[self.index]['filename'])
         if self.files[self.index]['filename']:
-            download_shards_and_retrieve(self.files[self.index]['filename'], self.key, self.ui)
+            progress_bar.set_size(self.files[self.index]['size'])
+            download_shards_and_retrieve(self.files[self.index]['filename'], self.key, self.ui, progress_bar)

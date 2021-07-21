@@ -19,13 +19,13 @@ def send_data(request, start, ui):
     context = zmq.Context()
     client_socket = context.socket(zmq.PAIR)
     client_socket.connect("tcp://" + request['ip'] + ":" + str(request['port']))
-
+    print("Connected to host")
     frame = client_socket.recv()
     frame = pickle.loads(frame)
 
+    print("Received start frame")
     # keep track of sending status
     success = True
-    print("Connected to server")
     f = open(request['shard_id'], "rb")
     if not start:
         resume_frame = client_socket.recv()
@@ -34,29 +34,35 @@ def send_data(request, start, ui):
         print(resume_msg)
         f.seek(resume_msg, 0)
 
-    data = f.read(1024)
-    client_socket.RCVTIMEO = 1000
+    print("chunk size:", helper.send_chunk_size)
+    data = f.read(helper.send_chunk_size)
+    client_socket.RCVTIMEO = 10000
+    print("Start sending data to host")
     while data:
         try:
             data_frame = {"type": "data", "data": data}
             data_frame = pickle.dumps(data_frame)
             client_socket.send(data_frame)
             ack_frame = client_socket.recv()
-            data = f.read(1024)
+            data = f.read(helper.send_chunk_size)
 
         except:
-            print("Disconnected")
+            print("Connection Lost")
             sleep(5)
             connected = False
             try:
+                print("trying to reconnect")
+                client_socket.close()
                 client_socket = context.socket(zmq.PAIR)
                 client_socket.connect("tcp://" + request['ip'] + ":" + str(request['port']))
                 client_socket.RCVTIMEO = 1000*60*60
+                print("connected to", "tcp://" + request['ip'] + ":" + str(request['port']))
 
                 # received start frame, reconnected to host
+                print("waiting to receive start frame")
                 start_frame = client_socket.recv()
-                start_frame = pickle.loads(frame)
-                print("Reconnected Successfully")
+                start_frame = pickle.loads(start_frame)
+                print(start_frame["type"], "Reconnected Successfully")
 
                 # get from host where it has received
                 resume_frame = client_socket.recv()
@@ -66,7 +72,7 @@ def send_data(request, start, ui):
                 f.seek(resume_msg, 0)
                 client_socket.RCVTIMEO = 1000
 
-                data = f.read(1024)
+                data = f.read(helper.send_chunk_size)
             except:
                 print("Unable to reconnect, terminating connection")
                 success = False
@@ -87,9 +93,9 @@ def send_data(request, start, ui):
     # Generate audits
     audits = generate_audits(request["shard_id"])
     print("Segment#", request['segment_number'], "Shard#", request['shard_index'], "--------audits generated.--------")
-    transfer_obj = read_transfer_file()
+    transfer_obj = helper.read_transfer_file()
     transfer_obj['segments'][request['segment_number']]['shards'][request['shard_index']]['done_uploading'] = True
-    save_transfer_file(transfer_obj)
+    helper.save_transfer_file(transfer_obj)
     shard_done_uploading(request["shard_id"], audits, ui)
 
     # remove from text file
@@ -107,7 +113,7 @@ def receive_data(request):
     context = zmq.Context()
     client_socket = context.socket(zmq.PAIR)
     client_socket.connect("tcp://" + request['ip'] + ":" + str(request['port']))
-
+    print("Connected to host")
     # receive start frame
     frame = client_socket.recv()
     frame = pickle.loads(frame)
@@ -118,6 +124,7 @@ def receive_data(request):
 
     # if file exists, resume upload, open in append mode, inform sender where it has stopped
     if os.path.isfile(request['shard_id']):
+        print("resume")
         file_size = os.path.getsize(request['shard_id'])
         resume_frame = {"type": "resume", "data": file_size}
         resume_frame = pickle.dumps(resume_frame)
@@ -131,12 +138,12 @@ def receive_data(request):
         print("Starting download")
         f = open(os.path.join(helper.shards_directory_path, request['shard_id']), "wb")
 
-    client_socket.RCVTIMEO = 1000
+    client_socket.RCVTIMEO = 10000
     while True:
         try:
             frame = client_socket.recv()
             frame = pickle.loads(frame)
-
+            print(frame["type"])
             if frame["type"] == "data":
                 # ack_frame = {"type": "ACK"}
                 # ack_frame = pickle.dumps(ack_frame)
@@ -192,6 +199,7 @@ def receive_data(request):
 
 # incomplete active connections
 def check_old_connections(ui):
+    print("Checking old connections")
     try:
         connections = {}
         with open(helper.upload_connection_file) as json_file:
@@ -202,6 +210,7 @@ def check_old_connections(ui):
     finally:
         for i in range(len(connections['connections'])):
             request = dict(connections['connections'][i])
+            print("Reconnecting host", request['ip'], request["port"])
             if request['type'] == 'upload':
                 send_data(request, False, ui)
             elif request['type'] == 'download':
@@ -220,20 +229,3 @@ def add_connection(request):
 
     except:
         print("Error")
-
-
-def read_transfer_file():
-    if not os.path.exists(helper.transfer_file):
-        raise Exception('Cache file deleted')
-    else:
-        outfile = open(helper.transfer_file, 'r')
-        transfer_obj = json.load(outfile)
-        return transfer_obj
-
-
-def save_transfer_file(transfer_obj):
-    if not os.path.exists(helper.transfer_file):
-        raise Exception('Cache file deleted')
-    else:
-        outfile = open(helper.transfer_file, 'w')
-        json.dump(transfer_obj, outfile)

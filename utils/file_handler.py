@@ -1,6 +1,9 @@
 import os
-import json
 import sys
+
+from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtWidgets import QWidget
+
 from .erasure_coding import encode, decode
 from .encryption import encrypt, decrypt
 from .helper import Helper
@@ -9,10 +12,11 @@ from .file_transfer_user import send_data, add_connection, check_old_connections
 helper = Helper()
 
 
-def process_segment(from_file, key, segment_number, transfer_obj, ui):
+def process_segment(from_file, key, segment_number, transfer_obj, ui, progress_bar):
     """
     This function takes a segment then start to process it if it's not already processed, and start uploading shard
     by shard
+    :param progress_bar: progress bar to show the percentage of upload
     :param from_file: segment file that will be processed
     :param key: encryption key used to encrypt segment
     :param segment_number: segment number in a file
@@ -63,7 +67,7 @@ def process_segment(from_file, key, segment_number, transfer_obj, ui):
 
         # Segment is processed save it's new state
         transfer_obj['segments'][segment_number]['processed'] = True
-        save_transfer_file(transfer_obj)
+        helper.save_transfer_file(transfer_obj)
     # If the segment is already processed, Nothing to do just a debugging statement
     else:
         print("Segment#", segment_number, "--------Already Processed Resume uploading----------")
@@ -88,21 +92,25 @@ def process_segment(from_file, key, segment_number, transfer_obj, ui):
             # Send data to storage node
             send_data(req, True, ui)
 
+            progress_bar(transfer_obj['segments'][segment_number]['shard_size'])
+
             # Save new state of the shard
             # transfer_obj['segments'][segment_number]['shards'][shard_index]['done_uploading'] = True
             # save_transfer_file(transfer_obj)
             print("Segment#", segment_number, "Shard#", shard_index, "--------Done Uploading.----------")
 
         else:
-           print("Segment#", segment_number, "Shard#", shard_index, "--------Already Uploaded(Skipped)----------")
+            progress_bar(transfer_obj['segments'][segment_number]['shard_size'])
+            print("Segment#", segment_number, "Shard#", shard_index, "--------Already Uploaded(Skipped)----------")
 
     # Reset
-    # helper.reset_shards()
+    helper.reset_shards()
 
 
-def process_file(from_file, key, ui, chunk_size=helper.segment_size):
+def process_file(from_file, key, ui, progress_bar, chunk_size=helper.segment_size):
     """
     This function divides the file into segments to process each segment separately
+    :param progress_bar: progress bar to show the percentage of upload
     :param from_file: input file that will be uploaded
     :param key: encryption key
     :param chunk_size: segment size
@@ -111,10 +119,13 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
     # try:
     print("process file function")
     # Get needed data to start processing and uploading.
-    transfer_obj = read_transfer_file()
+    transfer_obj = helper.read_transfer_file()
     response = get_pending_file_info(ui)
     file_size = os.stat(from_file).st_size
     file_size_decentorage, segments_metadata = response['file_size'], response['segments']
+
+    # set progress of progress bar
+    progress_bar(transfer_obj['progress'])
 
     # First time to upload.
     if transfer_obj['start_flag']:
@@ -128,14 +139,19 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
             transfer_obj['segments'][segment_index]['processed'] = False
         transfer_obj['key'] = key
         transfer_obj['start_flag'] = False
-        save_transfer_file(transfer_obj)
+        helper.save_transfer_file(transfer_obj)
     else:   # Retry uploading on pending connections
         print("Resume Upload")
-        # check_old_connections(ui)
-        if transfer_obj['key']:
-            key = transfer_obj['key']
+        if not key:
+            if transfer_obj['key']:
+                key = transfer_obj['key']
+            else:
+                return
         else:
-            return
+            transfer_obj['key'] = key
+            helper.save_transfer_file(transfer_obj)
+        print("Key:", key)
+        check_old_connections(ui)
 
     # File path has been changed
     if file_size != file_size_decentorage:
@@ -145,10 +161,10 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
     # File size is smaller than chunk size, 1 segment is needed
     if file_size < chunk_size:
         print("Segment", "Start Uploading.")
-        process_segment(from_file, key, 0, transfer_obj, ui)
+        process_segment(from_file, key, 0, transfer_obj, ui, progress_bar)
         helper.reset_directories()
         transfer_obj['segments'][0]['done_uploading'] = True
-        save_transfer_file(transfer_obj)
+        helper.save_transfer_file(transfer_obj)
         print("Segment", "Done Uploading. Cleaning up ....")
         try:
             os.remove(helper.transfer_file)
@@ -169,11 +185,11 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
             file_segment_path = helper.segments_directory_path + '/' + str(segment_num) + '_' + filename
             file_segment = open(file_segment_path, 'wb')
             file_segment.write(chunk)
-            process_segment(file_segment_path, key, segment_num, transfer_obj, ui)
+            process_segment(file_segment_path, key, segment_num, transfer_obj, ui, progress_bar)
             file_segment.close()
             helper.reset_directories()
             transfer_obj['segments'][segment_num]['done_uploading'] = True
-            save_transfer_file(transfer_obj)
+            helper.save_transfer_file(transfer_obj)
             print("Segment#", segment_num, "Done Uploading. Cleaning up ....")
         else:
             print("Segment#", segment_num, "Already Uploaded(Skipped).")
@@ -182,10 +198,12 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
         os.remove(helper.transfer_file)
     except:
         raise Exception("Error Occurred while deleting transfer file.")
-    print("Done Processing and uploading file.")
-    file_done_uploading(ui)
+    response = file_done_uploading(ui)
+    change_current_page(ui.main_page, ui)
+    helper.reset_directories()
     input_file.close()
-    #except Exception as e:
+    print("Done Processing and uploading file.")
+    # except Exception as e:
     #    exc_type, exc_obj, exc_tb = sys.exc_info()
     #    filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
     #    print(exc_type, filename, exc_tb.tb_lineno)
@@ -232,8 +250,17 @@ def retrieve_original_file(key, info, read_size=helper.segment_size):
     print("-----------------Done Retrieving File-----------------")
 
 
-def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_size):
+def download_shards_and_retrieve(filename, key, ui, progress_bar, read_size=helper.segment_size):
+    """
+    This function download shards needed to retrieve the file and then call retrieve original file function
+    :param progress_bar: progress bar to show the percentage of download
+    :param filename: the name of the file to be downloaded.
+    :param key: the decryption key that will be used to decrypt the files.
+    :param ui: ui object.
+    :param read_size: segment size
+    """
     print("-----------------Request Download from Decentorage ----------------")
+    # get information of the shards to download them
     segments = start_download(filename, ui)
     if segments:
         for segment in segments:
@@ -243,25 +270,22 @@ def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_siz
                        'shard_id': shard['shard_id'],
                        'auth': shard['auth'],
                        'ip': shard['ip_address']
-                       }
-                print("-----------------Downloading Shard#"+str(shard['shard_no'])+" in Segment#"+
+                        }
+                print("-----------------Downloading Shard#"+str(shard['shard_no'])+" in Segment#" +
                       str(shard['segment_no'])+"----------------")
                 # Add connection
                 add_connection(req)
-                # Send data to storage node
+                # Receive data to storage node
                 receive_data(req)
+                progress_bar(segment['shard_size'])
                 print("-----------------Download Done ----------------")
     else:
         return
     try:
+        # rename the shards to their original names.
         print("-----------------Shards Renaming----------------")
         for segment in segments:
             for shard in segment['shards']:
-                print(os.path.join(helper.shards_directory_path, shard['shard_id']),
-                      os.path.join(helper.shards_directory_path,
-                                   helper.shard_filename + "_" + str(shard['segment_no']) + "." +
-                                   str(shard['shard_no']) + "_" + str(segment["m"])))
-
                 os.rename(os.path.join(helper.shards_directory_path, shard['shard_id']),
                           os.path.join(helper.shards_directory_path,
                                        helper.shard_filename + "_" + str(shard['segment_no']) + "." +
@@ -272,6 +296,7 @@ def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_siz
         function_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         print("Error in renaming shards", exc_type, function_name, exc_tb.tb_lineno)
         return
+    # prepare file metadata dictionary needed by retrieve original file function.
     file_metadata = {
         "filename": filename,
         "segments": segments
@@ -282,20 +307,17 @@ def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_siz
     print("-----------------Cleaning up-----------------")
     helper.reset_directories()
     helper.reset_shards()
+    change_current_page(ui.main_page, ui)
 
 
-def read_transfer_file():
-    if not os.path.exists(helper.transfer_file):
-        raise Exception('Cache file deleted')
-    else:
-        outfile = open(helper.transfer_file, 'r')
-        transfer_obj = json.load(outfile)
-        return transfer_obj
+def change_current_page(target_page, ui):
 
+    class ChangePageSignalEmitter(QObject):
+        change_page_trigger = pyqtSignal(QWidget)
 
-def save_transfer_file(transfer_obj):
-    if not os.path.exists(helper.transfer_file):
-        raise Exception('Cache file deleted')
-    else:
-        outfile = open(helper.transfer_file, 'w')
-        json.dump(transfer_obj, outfile)
+        def change_page(self, stacked_widget, target):
+            self.change_page_trigger.connect(stacked_widget.setCurrentWidget)
+            self.change_page_trigger.emit(target)
+
+    change_page_signal_emitter = ChangePageSignalEmitter()
+    change_page_signal_emitter.change_page(ui.stackedWidget, target_page)

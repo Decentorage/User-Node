@@ -57,7 +57,11 @@ class ContractDetails(QtWidgets.QWidget):
             self.save_file_to_upload_info()
 
     def save_file_to_upload_info(self):
-        request_info = {'file_path': self.file_path, 'start_flag': True, 'type': 'upload'}
+        total_size = 0
+        for segment in self.contract_details['segments']:
+            total_size += segment['shard_size'] * segment['m']
+        request_info = {'file_path': self.file_path, 'start_flag': True, 'type': 'upload',
+                        'progress': 0, 'total_size_to_upload': total_size, 'key': None}
         if not os.path.exists(self.helper.transfer_file):
             outfile = open(self.helper.transfer_file, "x")
             json.dump(request_info, outfile)
