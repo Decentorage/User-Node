@@ -1,6 +1,8 @@
 import os
 import sys
-import time
+
+from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtWidgets import QWidget
 
 from .erasure_coding import encode, decode
 from .encryption import encrypt, decrypt
@@ -98,10 +100,11 @@ def process_segment(from_file, key, segment_number, transfer_obj, ui, progress_b
             print("Segment#", segment_number, "Shard#", shard_index, "--------Done Uploading.----------")
 
         else:
-           print("Segment#", segment_number, "Shard#", shard_index, "--------Already Uploaded(Skipped)----------")
+            progress_bar(transfer_obj['segments'][segment_number]['shard_size'])
+            print("Segment#", segment_number, "Shard#", shard_index, "--------Already Uploaded(Skipped)----------")
 
     # Reset
-    # helper.reset_shards()
+    helper.reset_shards()
 
 
 def process_file(from_file, key, ui, progress_bar, chunk_size=helper.segment_size):
@@ -139,10 +142,15 @@ def process_file(from_file, key, ui, progress_bar, chunk_size=helper.segment_siz
         helper.save_transfer_file(transfer_obj)
     else:   # Retry uploading on pending connections
         print("Resume Upload")
-        if transfer_obj['key']:
-            key = transfer_obj['key']
+        if not key:
+            if transfer_obj['key']:
+                key = transfer_obj['key']
+            else:
+                return
         else:
-            return
+            transfer_obj['key'] = key
+            helper.save_transfer_file(transfer_obj)
+        print("Key:", key)
         check_old_connections(ui)
 
     # File path has been changed
@@ -153,7 +161,7 @@ def process_file(from_file, key, ui, progress_bar, chunk_size=helper.segment_siz
     # File size is smaller than chunk size, 1 segment is needed
     if file_size < chunk_size:
         print("Segment", "Start Uploading.")
-        process_segment(from_file, key, 0, transfer_obj, ui)
+        process_segment(from_file, key, 0, transfer_obj, ui, progress_bar)
         helper.reset_directories()
         transfer_obj['segments'][0]['done_uploading'] = True
         helper.save_transfer_file(transfer_obj)
@@ -177,7 +185,7 @@ def process_file(from_file, key, ui, progress_bar, chunk_size=helper.segment_siz
             file_segment_path = helper.segments_directory_path + '/' + str(segment_num) + '_' + filename
             file_segment = open(file_segment_path, 'wb')
             file_segment.write(chunk)
-            process_segment(file_segment_path, key, segment_num, transfer_obj, ui)
+            process_segment(file_segment_path, key, segment_num, transfer_obj, ui, progress_bar)
             file_segment.close()
             helper.reset_directories()
             transfer_obj['segments'][segment_num]['done_uploading'] = True
@@ -190,10 +198,12 @@ def process_file(from_file, key, ui, progress_bar, chunk_size=helper.segment_siz
         os.remove(helper.transfer_file)
     except:
         raise Exception("Error Occurred while deleting transfer file.")
-    print("Done Processing and uploading file.")
-    file_done_uploading(ui)
+    response = file_done_uploading(ui)
+    change_current_page(ui.main_page, ui)
+    helper.reset_directories()
     input_file.close()
-    #except Exception as e:
+    print("Done Processing and uploading file.")
+    # except Exception as e:
     #    exc_type, exc_obj, exc_tb = sys.exc_info()
     #    filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
     #    print(exc_type, filename, exc_tb.tb_lineno)
@@ -263,11 +273,11 @@ def download_shards_and_retrieve(filename, key, ui, progress_bar, read_size=help
                         }
                 print("-----------------Downloading Shard#"+str(shard['shard_no'])+" in Segment#" +
                       str(shard['segment_no'])+"----------------")
-                progress_bar(segment['shard_size'])
                 # Add connection
                 add_connection(req)
                 # Receive data to storage node
                 receive_data(req)
+                progress_bar(segment['shard_size'])
                 print("-----------------Download Done ----------------")
     else:
         return
@@ -297,4 +307,17 @@ def download_shards_and_retrieve(filename, key, ui, progress_bar, read_size=help
     print("-----------------Cleaning up-----------------")
     helper.reset_directories()
     helper.reset_shards()
-    ui.stackedWidget.setCurrentWidget(ui.main_page)
+    change_current_page(ui.main_page, ui)
+
+
+def change_current_page(target_page, ui):
+
+    class ChangePageSignalEmitter(QObject):
+        change_page_trigger = pyqtSignal(QWidget)
+
+        def change_page(self, stacked_widget, target):
+            self.change_page_trigger.connect(stacked_widget.setCurrentWidget)
+            self.change_page_trigger.emit(target)
+
+    change_page_signal_emitter = ChangePageSignalEmitter()
+    change_page_signal_emitter.change_page(ui.stackedWidget, target_page)

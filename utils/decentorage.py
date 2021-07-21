@@ -223,6 +223,7 @@ def file_done_uploading(ui):
     try:
         token = helper.token
         if token:
+            print("Sending file done uploading api call.")
             response = requests.get(helper.host_url + helper.client_url_prefix + 'fileDoneUploading',
                                     headers={"token": token})
     except:

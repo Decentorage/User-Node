@@ -48,6 +48,15 @@ class UploadMain(QtWidgets.QWidget):
                 file_path = transfer_obj['file_path']
                 progress_bar.set_size(transfer_obj['total_size_to_upload'])
             process_file(file_path, self.key, self.ui, progress_bar)
+        else:
+            if os.path.exists(self.helper.transfer_file):
+                with open(self.helper.transfer_file) as json_file:
+                    transfer_obj = json.load(json_file)
+                    self.key = transfer_obj["key"]
+                    file_path = transfer_obj['file_path']
+                    progress_bar.set_size(transfer_obj['total_size_to_upload'])
+                process_file(file_path, self.key, self.ui, progress_bar)
+            self.ui.stackedWidget.setCurrentWidget(self.ui.main_page)
 
     def poll_state(self):
         self.filename = None
@@ -69,7 +78,7 @@ class UploadMain(QtWidgets.QWidget):
                     else:
                         if 0 < key_size < 32:
                             self.ui.upload_main_start_uploading_pb.setText("Start Uploading")
-                    self.ui.upload_main_start_uploading_pb.setEnabled(True)
+                            self.ui.upload_main_start_uploading_pb.setEnabled(True)
                 else:
                     self.ui.upload_main_start_uploading_pb.setText("Start Uploading")
                 self.ui.upload_main_encryption_key_line_edit.setEnabled(True)

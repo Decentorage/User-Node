@@ -22,6 +22,7 @@ class Helper:
         self.icon_path = os.path.realpath("gui/resources/decentorage_icon.png")
         self.shard_filename = "shard"
         self.segment_filename = "segment"
+        self.send_chunk_size = int(10 * self.megabyte)
 
         # define some parameters used through the application
         self.host_url = "http://192.168.1.10:5000/"
@@ -44,7 +45,7 @@ class Helper:
 
         # mem = virtual_memory()
         # self.segment_size = math.floor(mem - int(2 * self.gigabyte))
-        self.segment_size = int(600 * self.megabyte)                             # temporary value for test purposes
+        self.segment_size = int(200 * self.megabyte)                             # temporary value for test purposes
 
         # create directories if not exist.
         if not os.path.exists(self.shards_directory_path):

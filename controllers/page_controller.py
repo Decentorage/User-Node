@@ -54,8 +54,9 @@ class PageController:
 
         if os.path.exists(self.helper.transfer_file):
             with open(self.helper.transfer_file) as json_file:
-                start_flag = json.load(json_file)['start_flag']
-                if not start_flag and os.path.exists(self.helper.cache_file):
+                transfer_file = json.load(json_file)
+                start_flag = transfer_file['start_flag']
+                if not start_flag and transfer_file['key'] and os.path.exists(self.helper.cache_file):
                     self.switch_start_upload("Resume Uploading file..")
 
         # Show window
@@ -81,8 +82,8 @@ class PageController:
 
     def switch_start_upload(self, msg):
         self.ui.progress_bar_page_label.setText(msg)
-        self.ui.stackedWidget.setCurrentWidget(self.ui.progress_bar_page)
         self.ui.progress_bar_page_progress_bar.setValue(0)
+        self.ui.stackedWidget.setCurrentWidget(self.ui.progress_bar_page)
         call_worker(lambda: self.upload_main.start_uploading(ProgressBar(self.ui.progress_bar_page_progress_bar)),
                     self.ui)
 
