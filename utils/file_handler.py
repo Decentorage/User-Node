@@ -85,15 +85,14 @@ def process_segment(from_file, key, segment_number, transfer_obj, ui, progress_b
                    'auth': shard['shared_authentication_key'],
                    'ip': shard['ip_address'],
                    "segment_number": segment_number,
-                   "shard_index": shard_index
+                   "shard_index": shard_index,
+                   "shard_size": transfer_obj['segments'][segment_number]['shard_size']
                    }
             # Add connection
             add_connection(req)
 
             # Send data to storage node
-            send_data(req, True, ui)
-
-            progress_bar(transfer_obj['segments'][segment_number]['shard_size'])
+            send_data(req, True, ui, progress_bar)
 
             # Save new state of the shard
             # transfer_obj['segments'][segment_number]['shards'][shard_index]['done_uploading'] = True
@@ -101,7 +100,6 @@ def process_segment(from_file, key, segment_number, transfer_obj, ui, progress_b
             print("Segment#", segment_number, "Shard#", shard_index, "--------Done Uploading.----------")
 
         else:
-            progress_bar(transfer_obj['segments'][segment_number]['shard_size'])
             print("Segment#", segment_number, "Shard#", shard_index, "--------Already Uploaded(Skipped)----------")
 
     # Reset
@@ -299,13 +297,13 @@ def download_shards_and_retrieve(filename, key, ui, progress_bar, read_size=help
                            'port': int(shard['port']),
                            'shard_id': shard['shard_id'],
                            'auth': shard['auth'],
-                           'ip': shard['ip_address']}
+                           'ip': shard['ip_address'],
+                           'shard_size': segment['shard_size']}
                     print("-----------------Downloading Shard#"+str(shard['shard_no'])+" in Segment#" +
                           str(shard['segment_no'])+"----------------")
 
                     # Receive data from storage node
-                    receive_data(req)
-                    progress_bar(segment['shard_size'])
+                    receive_data(req, progress_bar)
 
                     print("-----------------Download Done ----------------")
         else:

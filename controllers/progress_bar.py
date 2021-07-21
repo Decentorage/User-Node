@@ -1,5 +1,11 @@
 import threading
 from PyQt5.QtCore import QObject, pyqtSignal
+helper = None
+
+
+def init_progress_bar(helper_obj):
+    global helper
+    helper = helper_obj
 
 
 class ProgressBar(object):
@@ -24,4 +30,8 @@ class ProgressBar(object):
     def __call__(self, bytes_amount):
         with self._lock:
             self._seen_so_far += (bytes_amount / 1024)
+            transfer_obj = helper.read_transfer_file()
+            if not transfer_obj:
+                transfer_obj['progress_bar'] = self._seen_so_far
+                helper.save_transfer_file(transfer_obj)
             self.progress_signal_emitter.emit_trigger(self._progress_bar, self._seen_so_far)

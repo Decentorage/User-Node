@@ -15,7 +15,7 @@ def init_file_transfer_user(helper_obj, semaphore_obj):
     semaphore = semaphore_obj
 
 
-def send_data(request, start, ui):
+def send_data(request, start, ui, progress_bar):
     context = zmq.Context()
     client_socket = context.socket(zmq.PAIR)
     client_socket.connect("tcp://" + request['ip'] + ":" + str(request['port']))
@@ -45,7 +45,7 @@ def send_data(request, start, ui):
             client_socket.send(data_frame)
             ack_frame = client_socket.recv()
             data = f.read(helper.send_chunk_size)
-
+            progress_bar(request['shard_size'])
         except:
             print("Connection Lost")
             sleep(5)
@@ -73,6 +73,7 @@ def send_data(request, start, ui):
                 client_socket.RCVTIMEO = 1000
 
                 data = f.read(helper.send_chunk_size)
+                progress_bar(request['shard_size'])
             except:
                 print("Unable to reconnect, terminating connection")
                 success = False
@@ -108,7 +109,7 @@ def send_data(request, start, ui):
     print("Done uploading")
 
 
-def receive_data(request):
+def receive_data(request, progress_bar):
 
     context = zmq.Context()
     client_socket = context.socket(zmq.PAIR)
@@ -150,6 +151,7 @@ def receive_data(request):
                 # client_socket.send(ack_frame)
                 data = frame["data"]
                 f.write(data)
+                progress_bar(request['shard_size'])
 
             elif frame["type"] == "END":
                 f.close()
