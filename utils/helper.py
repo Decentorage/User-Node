@@ -1,6 +1,7 @@
 import os
 import glob
 import math
+import json
 from psutil import virtual_memory
 
 
@@ -23,7 +24,7 @@ class Helper:
         self.segment_filename = "segment"
 
         # define some parameters used through the application
-        self.host_url = "http://192.168.1.5:5000/"
+        self.host_url = "http://192.168.1.10:5000/"
         self.client_url_prefix = 'user/'
         self.server_not_responding = "Check your internet connection"
         self.erasure_factor = 1
@@ -142,3 +143,26 @@ class Helper:
             math.ceil(file_size - self.segment_size*(file_metadata['segments_count'] - 1))/k)}
         file_metadata['segments'].append(segment)
         return file_metadata['segments'], file_metadata['segments_count']
+
+    def read_transfer_file(self):
+        """
+        Read transfer file that is used to store information about the ongoing transfer
+        :return: transfer dictionary
+        """
+        if not os.path.exists(self.transfer_file):
+            raise Exception('Cache file deleted')
+        else:
+            outfile = open(self.transfer_file, 'r')
+            transfer_obj = json.load(outfile)
+            return transfer_obj
+
+    def save_transfer_file(self, transfer_dict):
+        """
+        This function save the data in transfer file
+        :param transfer_dict: transfer dictionary that will be saved
+        """
+        if not os.path.exists(self.transfer_file):
+            raise Exception('Cache file deleted')
+        else:
+            outfile = open(self.transfer_file, 'w')
+            json.dump(transfer_dict, outfile)

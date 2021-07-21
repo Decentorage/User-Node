@@ -87,9 +87,9 @@ def send_data(request, start, ui):
     # Generate audits
     audits = generate_audits(request["shard_id"])
     print("Segment#", request['segment_number'], "Shard#", request['shard_index'], "--------audits generated.--------")
-    transfer_obj = read_transfer_file()
+    transfer_obj = helper.read_transfer_file()
     transfer_obj['segments'][request['segment_number']]['shards'][request['shard_index']]['done_uploading'] = True
-    save_transfer_file(transfer_obj)
+    helper.save_transfer_file(transfer_obj)
     shard_done_uploading(request["shard_id"], audits, ui)
 
     # remove from text file
@@ -220,20 +220,3 @@ def add_connection(request):
 
     except:
         print("Error")
-
-
-def read_transfer_file():
-    if not os.path.exists(helper.transfer_file):
-        raise Exception('Cache file deleted')
-    else:
-        outfile = open(helper.transfer_file, 'r')
-        transfer_obj = json.load(outfile)
-        return transfer_obj
-
-
-def save_transfer_file(transfer_obj):
-    if not os.path.exists(helper.transfer_file):
-        raise Exception('Cache file deleted')
-    else:
-        outfile = open(helper.transfer_file, 'w')
-        json.dump(transfer_obj, outfile)

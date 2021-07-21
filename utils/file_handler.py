@@ -1,6 +1,7 @@
 import os
-import json
 import sys
+import time
+
 from .erasure_coding import encode, decode
 from .encryption import encrypt, decrypt
 from .helper import Helper
@@ -63,7 +64,7 @@ def process_segment(from_file, key, segment_number, transfer_obj, ui):
 
         # Segment is processed save it's new state
         transfer_obj['segments'][segment_number]['processed'] = True
-        save_transfer_file(transfer_obj)
+        helper.save_transfer_file(transfer_obj)
     # If the segment is already processed, Nothing to do just a debugging statement
     else:
         print("Segment#", segment_number, "--------Already Processed Resume uploading----------")
@@ -111,7 +112,7 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
     # try:
     print("process file function")
     # Get needed data to start processing and uploading.
-    transfer_obj = read_transfer_file()
+    transfer_obj = helper.read_transfer_file()
     response = get_pending_file_info(ui)
     file_size = os.stat(from_file).st_size
     file_size_decentorage, segments_metadata = response['file_size'], response['segments']
@@ -128,7 +129,7 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
             transfer_obj['segments'][segment_index]['processed'] = False
         transfer_obj['key'] = key
         transfer_obj['start_flag'] = False
-        save_transfer_file(transfer_obj)
+        helper.save_transfer_file(transfer_obj)
     else:   # Retry uploading on pending connections
         print("Resume Upload")
         if transfer_obj['key']:
@@ -148,7 +149,7 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
         process_segment(from_file, key, 0, transfer_obj, ui)
         helper.reset_directories()
         transfer_obj['segments'][0]['done_uploading'] = True
-        save_transfer_file(transfer_obj)
+        helper.save_transfer_file(transfer_obj)
         print("Segment", "Done Uploading. Cleaning up ....")
         try:
             os.remove(helper.transfer_file)
@@ -173,7 +174,7 @@ def process_file(from_file, key, ui, chunk_size=helper.segment_size):
             file_segment.close()
             helper.reset_directories()
             transfer_obj['segments'][segment_num]['done_uploading'] = True
-            save_transfer_file(transfer_obj)
+            helper.save_transfer_file(transfer_obj)
             print("Segment#", segment_num, "Done Uploading. Cleaning up ....")
         else:
             print("Segment#", segment_num, "Already Uploaded(Skipped).")
@@ -232,9 +233,10 @@ def retrieve_original_file(key, info, read_size=helper.segment_size):
     print("-----------------Done Retrieving File-----------------")
 
 
-def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_size):
+def download_shards_and_retrieve(filename, key, ui, progress_bar, read_size=helper.segment_size):
     """
     This function download shards needed to retrieve the file and then call retrieve original file function
+    :param progress_bar: progress bar to show the percentage of download
     :param filename: the name of the file to be downloaded.
     :param key: the decryption key that will be used to decrypt the files.
     :param ui: ui object.
@@ -251,12 +253,13 @@ def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_siz
                        'shard_id': shard['shard_id'],
                        'auth': shard['auth'],
                        'ip': shard['ip_address']
-                       }
-                print("-----------------Downloading Shard#"+str(shard['shard_no'])+" in Segment#"+
+                        }
+                print("-----------------Downloading Shard#"+str(shard['shard_no'])+" in Segment#" +
                       str(shard['segment_no'])+"----------------")
+                progress_bar(segment['shard_size'])
                 # Add connection
                 add_connection(req)
-                # Send data to storage node
+                # Receive data to storage node
                 receive_data(req)
                 print("-----------------Download Done ----------------")
     else:
@@ -287,28 +290,4 @@ def download_shards_and_retrieve(filename, key, ui, read_size=helper.segment_siz
     print("-----------------Cleaning up-----------------")
     helper.reset_directories()
     helper.reset_shards()
-
-
-def read_transfer_file():
-    """
-    Read transfer file that is used to store information about the ongoing transfer
-    :return: transfer dictionary
-    """
-    if not os.path.exists(helper.transfer_file):
-        raise Exception('Cache file deleted')
-    else:
-        outfile = open(helper.transfer_file, 'r')
-        transfer_dict = json.load(outfile)
-        return transfer_dict
-
-
-def save_transfer_file(transfer_dict):
-    """
-    This function save the data in transfer file
-    :param transfer_dict: transfer dictionary that will be saved
-    """
-    if not os.path.exists(helper.transfer_file):
-        raise Exception('Cache file deleted')
-    else:
-        outfile = open(helper.transfer_file, 'w')
-        json.dump(transfer_dict, outfile)
+    ui.stackedWidget.setCurrentWidget(ui.main_page)

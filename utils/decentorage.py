@@ -59,13 +59,15 @@ def get_price(contract_details, ui):
             return False
     except:
         worker_error_page("Error", helper.server_not_responding, ui)
+        response = False
         return False
     finally:
-        if response.status_code == 200:
-            return response.json()['price']
-        else:
-            worker_error_page("Please Login again", "", ui, ui.login_page)
-            return False
+        if response:
+            if response.status_code == 200:
+                return response.json()['price']
+            else:
+                worker_error_page("Please Login again", "", ui, ui.login_page)
+                return False
 
 
 def get_user_files(ui):
@@ -84,13 +86,15 @@ def get_user_files(ui):
             return False
     except:
         worker_error_page("Error", helper.server_not_responding, ui)
+        response = False
         return False
     finally:
-        if response.status_code == 200:
-            return response.json()
-        else:
-            worker_error_page("Please Login again", "", ui, ui.login_page)
-            return False
+        if response:
+            if response.status_code == 200:
+                return response.json()
+            else:
+                worker_error_page("Please Login again", "", ui, ui.login_page)
+                return False
 
 
 def get_user_state(ui):
@@ -109,13 +113,15 @@ def get_user_state(ui):
             return False
     except:
         worker_error_page("Error", helper.server_not_responding, ui)
+        response = False
         return False
     finally:
-        if response.status_code == 200:
-            return response.json()['state']
-        else:
-            worker_error_page("Please Login again", "", ui, ui.login_page)
-            return False
+        if response:
+            if response.status_code == 200:
+                return response.json()['state']
+            else:
+                worker_error_page("Please Login again", "", ui, ui.login_page)
+                return False
 
 
 def create_file(contract_details, ui):
@@ -136,16 +142,18 @@ def create_file(contract_details, ui):
             return False
     except:
         worker_error_page("Error", helper.server_not_responding, ui)
+        response = False
         return False
     finally:
-        if response.status_code == 201:
-            return True
-        elif response.status_code == 409:
-            worker_error_page("Error", "This file already stored.", ui)
-            return False
-        else:
-            ui.stackedWidget.setCurrentWidget(ui.upload_main_page)
-            return False
+        if response:
+            if response.status_code == 201:
+                return True
+            elif response.status_code == 409:
+                worker_error_page("Error", "This file already stored.", ui)
+                return False
+            else:
+                ui.stackedWidget.setCurrentWidget(ui.upload_main_page)
+                return False
 
 
 def get_pending_file_info(ui):
@@ -161,16 +169,18 @@ def get_pending_file_info(ui):
                                     headers={"token": token})
         else:
             worker_error_page("Please Login again", "", ui, ui.login_page)
+            response = False
             return False
     except:
         worker_error_page("Error", helper.server_not_responding, ui)
         return False
     finally:
-        if response.status_code == 200:
-            return response.json()
-        else:
-            worker_error_page("Please Login again", "", ui, ui.login_page)
-            return False
+        if response:
+            if response.status_code == 200:
+                return response.json()
+            else:
+                worker_error_page("Please Login again", "", ui, ui.login_page)
+                return False
 
 
 def shard_done_uploading(shard_id, audits, ui):
@@ -194,13 +204,15 @@ def shard_done_uploading(shard_id, audits, ui):
             return False
     except:
         worker_error_page("Error", helper.server_not_responding, ui)
+        response = False
         return False
     finally:
-        if response.status_code == 200:
-            return True
-        else:
-            worker_error_page("Please Login again", "", ui, ui.login_page)
-            return False
+        if response:
+            if response.status_code == 200:
+                return True
+            else:
+                worker_error_page("Please Login again", "", ui, ui.login_page)
+                return False
 
 
 def file_done_uploading(ui):
@@ -215,13 +227,15 @@ def file_done_uploading(ui):
                                     headers={"token": token})
     except:
         worker_error_page("Error", helper.server_not_responding, ui)
+        response = False
         return False
     finally:
-        if response.status_code == 200:
-            return True
-        else:
-            worker_error_page("Please Login again", "", ui, ui.login_page)
-            return False
+        if response:
+            if response.status_code == 200:
+                return True
+            else:
+                worker_error_page("Please Login again", "", ui, ui.login_page)
+                return False
 
 
 def start_download(filename, ui):
@@ -244,16 +258,18 @@ def start_download(filename, ui):
             return False
     except:
         worker_error_page("Error", helper.server_not_responding, ui)
+        response = False
         return False
     finally:
-        if response.status_code == 200:
-            return response.json()["segments"]
-        elif response.status_code == 404 or response.status_code == 405:
-            worker_error_page("Error", response.text(), ui)
-            return False
-        else:
-            worker_error_page("Please Login again", "", ui, ui.login_page)
-            return False
+        if response:
+            if response.status_code == 200:
+                return response.json()["segments"]
+            elif response.status_code == 404 or response.status_code == 405:
+                worker_error_page("Error", response.text(), ui)
+                return False
+            else:
+                worker_error_page("Please Login again", "", ui, ui.login_page)
+                return False
 
 
 def worker_error_page(title, body, gui, target=None):

@@ -1,5 +1,4 @@
 import json
-
 from PyQt5.QtCore import QThreadPool, QObject, pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget
@@ -7,6 +6,7 @@ from pages import Main, Login, UploadMain, ContractDetails, ShowFiles
 from PyQt5 import QtWidgets
 from gui.ui import Ui_MainWindow
 from .worker import call_worker
+from .progress_bar import ProgressBar
 import os
 
 
@@ -86,7 +86,10 @@ class PageController:
         call_worker(self.contract_details.request_contract, self.ui, self.ui.upload_main_page, "Creating contract..")
 
     def switch_start_download(self):
-        call_worker(self.show_files.download, self.ui, self.ui.main_page, "Downloading file..")
+        self.ui.progress_bar_page_label.setText("Downloading File..")
+        self.ui.stackedWidget.setCurrentWidget(self.ui.progress_bar_page)
+        self.ui.progress_bar_page_progress_bar.setValue(0)
+        call_worker(lambda: self.show_files.download(ProgressBar(self.ui.progress_bar_page_progress_bar)), self.ui)
 
     def logout(self):
         try:
