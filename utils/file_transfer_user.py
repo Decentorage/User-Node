@@ -144,14 +144,14 @@ def receive_data(request, progress_bar):
         try:
             frame = client_socket.recv()
             frame = pickle.loads(frame)
-            print(frame["type"])
+            # print(frame["type"])
             if frame["type"] == "data":
-                # ack_frame = {"type": "ACK"}
-                # ack_frame = pickle.dumps(ack_frame)
-                # client_socket.send(ack_frame)
                 data = frame["data"]
                 f.write(data)
                 progress_bar(helper.send_chunk_size, "download")
+                ack_frame = {"type": "ACK"}
+                ack_frame = pickle.dumps(ack_frame)
+                client_socket.send(ack_frame)
 
             elif frame["type"] == "END":
                 f.close()
