@@ -148,7 +148,9 @@ def receive_data(request, progress_bar):
             if frame["type"] == "data":
                 data = frame["data"]
                 f.write(data)
+                print("received frame ", frame["type"])
                 progress_bar(helper.send_chunk_size, "download")
+                print("sending ack frame")
                 ack_frame = {"type": "ACK"}
                 ack_frame = pickle.dumps(ack_frame)
                 client_socket.send(ack_frame)
