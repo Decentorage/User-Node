@@ -27,11 +27,24 @@ class ProgressBar(object):
             self.trigger.connect(progress_bar.setValue)
             self.trigger.emit(value)
 
-    def __call__(self, bytes_amount):
+    def __call__(self, bytes_amount, transfer_type="upload"):
         with self._lock:
             self._seen_so_far += (bytes_amount / 1024)
-            transfer_obj = helper.read_transfer_file()
-            if not transfer_obj:
-                transfer_obj['progress_bar'] = self._seen_so_far
-                helper.save_transfer_file(transfer_obj)
+            if transfer_type == "upload":
+                transfer_obj = helper.read_transfer_file()
+                if transfer_obj:
+                    if transfer_obj['progress'] <= self._seen_so_far:
+                        transfer_obj['progress'] = self._seen_so_far
+                        helper.save_transfer_file(transfer_obj)
+                    else:
+                        self._seen_so_far = transfer_obj['progress']
+            else:
+                transfer_obj = helper.read_download_transfer_file()
+                if transfer_obj:
+                    if transfer_obj['progress'] <= self._seen_so_far:
+                        transfer_obj['progress'] = self._seen_so_far
+                        helper.save_download_transfer_file(transfer_obj)
+                    else:
+                        self._seen_so_far = transfer_obj['progress']
+
             self.progress_signal_emitter.emit_trigger(self._progress_bar, self._seen_so_far)
