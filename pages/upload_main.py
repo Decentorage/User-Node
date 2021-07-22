@@ -16,7 +16,6 @@ class UploadMain(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
         self.ui = ui
         self.helper = helper
-        self.url = "www.google.com"
         self.filename = None
         self.key = None
         # Connectors
@@ -35,7 +34,7 @@ class UploadMain(QtWidgets.QWidget):
             self.contract_details_switch.emit(self.filename)
 
     def request_contract(self):
-        webbrowser.open_new(self.url)
+        webbrowser.open_new(self.helper.frontend_url)
 
     def browse(self):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName()

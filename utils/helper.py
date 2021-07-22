@@ -27,6 +27,7 @@ class Helper:
 
         # define some parameters used through the application
         self.host_url = "http://192.168.1.10:5000/"
+        self.frontend_url = "http:localhost:3000/"
         self.client_url_prefix = 'user/'
         self.server_not_responding = "Check your internet connection"
         self.erasure_factor = 1
