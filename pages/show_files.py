@@ -1,3 +1,6 @@
+import json
+import os
+
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QListWidgetItem
@@ -67,7 +70,29 @@ class ShowFiles(QtWidgets.QWidget):
         self.check_download_conditions()
 
     def download(self, progress_bar):
-        print("Downloading", self.index, self.files[self.index]['filename'])
-        if self.files[self.index]['filename']:
-            progress_bar.set_size(self.files[self.index]['size'])
-            download_shards_and_retrieve(self.files[self.index]['filename'], self.key, self.ui, progress_bar)
+        # print("Downloading", self.index, self.files[self.index]['filename'])
+        transfer_obj = self.helper.read_download_transfer_file()
+        # if transfer object doesn't exit therefore the download is just started
+        if not transfer_obj:
+            if self.files[self.index]['filename']:
+                # set progress bar range to the size of the file to be downloaded
+                progress_bar.set_size(self.files[self.index]['size'])
+                # save needed information to resume download if connection lost.
+                transfer_obj = {
+                    'filename': self.files[self.index]['filename'], 'key': self.key, "shards_renamed": False,
+                    'type': 'download', 'progress': 0, 'total_size_to_download': self.files[self.index]['size'],
+                    "start_flag": True
+                }
+                with open(self.helper.download_transfer_file, 'w') as outfile:
+                    json.dump(transfer_obj, outfile)
+                download_shards_and_retrieve(self.files[self.index]['filename'], self.key, self.ui, progress_bar)
+        # if transfer object exits therefore there is a download needs to be resumed.
+        else:
+            # set progress bar range to the size of the file to be downloaded
+            progress_bar.set_size(transfer_obj['total_size_to_download'])
+            # set current progress to the progress bar.
+            print("Old Progress", transfer_obj['progress'],
+                  int(transfer_obj['progress']/ transfer_obj['total_size_to_download']))
+            progress_bar(transfer_obj['progress'], "download")
+            # resume download
+            download_shards_and_retrieve(transfer_obj['filename'], transfer_obj['key'], self.ui, progress_bar)

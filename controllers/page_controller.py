@@ -45,7 +45,7 @@ class PageController:
         self.main.upload_files_switch.connect(self.switch_upload_main)
         self.show_files.back_to_main_switch.connect(self.switch_to_main)
         self.show_files.logout_switch.connect(self.switch_to_login)
-        self.show_files.download_switch.connect(self.switch_start_download)
+        self.show_files.download_switch.connect(lambda: self.switch_start_download("Downloading File.."))
         self.upload_main.back_to_main_switch.connect(self.switch_to_main)
         self.upload_main.contract_details_switch.connect(self.switch_contract_details)
         self.upload_main.start_uploading_switch.connect(lambda: self.switch_start_upload("Uploading file.."))
@@ -58,6 +58,13 @@ class PageController:
                 start_flag = transfer_file['start_flag']
                 if not start_flag and transfer_file['key'] and os.path.exists(self.helper.cache_file):
                     self.switch_start_upload("Resume Uploading file..")
+
+        if os.path.exists(self.helper.download_transfer_file):
+            with open(self.helper.download_transfer_file) as json_file:
+                transfer_file = json.load(json_file)
+                start_flag = transfer_file['start_flag']
+                if not start_flag and transfer_file['key'] and os.path.exists(self.helper.cache_file):
+                    self.switch_start_download("Resume Downloading file..")
 
         # Show window
         self.application_window.show()
@@ -90,8 +97,8 @@ class PageController:
     def switch_create_contract(self):
         call_worker(self.contract_details.request_contract, self.ui, self.ui.upload_main_page, "Creating contract..")
 
-    def switch_start_download(self):
-        self.ui.progress_bar_page_label.setText("Downloading File..")
+    def switch_start_download(self, msg):
+        self.ui.progress_bar_page_label.setText(msg)
         self.ui.stackedWidget.setCurrentWidget(self.ui.progress_bar_page)
         self.ui.progress_bar_page_progress_bar.setValue(0)
         call_worker(lambda: self.show_files.download(ProgressBar(self.ui.progress_bar_page_progress_bar)), self.ui)

@@ -18,6 +18,7 @@ class Helper:
         self.encryption_directory = os.path.realpath("data/encrypted")
         self.cache_file = os.path.realpath("data/cache/decentorage_cache")
         self.transfer_file = os.path.realpath("data/cache/decentorage_transfer.json")
+        self.download_transfer_file = os.path.realpath("data/cache/download_decentorage_transfer.json")
         self.upload_connection_file = os.path.realpath("data/cache/connections.txt")
         self.icon_path = os.path.realpath("gui/resources/decentorage_icon.png")
         self.shard_filename = "shard"
@@ -151,7 +152,7 @@ class Helper:
         :return: transfer dictionary
         """
         if not os.path.exists(self.transfer_file):
-            raise Exception('Cache file deleted')
+            return None
         else:
             outfile = open(self.transfer_file, 'r')
             transfer_obj = json.load(outfile)
@@ -166,4 +167,27 @@ class Helper:
             raise Exception('Cache file deleted')
         else:
             outfile = open(self.transfer_file, 'w')
+            json.dump(transfer_dict, outfile)
+
+    def read_download_transfer_file(self):
+        """
+        Read download transfer file that is used to store information about the ongoing transfer
+        :return: transfer dictionary
+        """
+        if not os.path.exists(self.download_transfer_file):
+            return None
+        else:
+            outfile = open(self.download_transfer_file, 'r')
+            transfer_obj = json.load(outfile)
+            return transfer_obj
+
+    def save_download_transfer_file(self, transfer_dict):
+        """
+        This function save the data in download transfer file
+        :param transfer_dict: transfer dictionary that will be saved
+        """
+        if not os.path.exists(self.download_transfer_file):
+            raise Exception('Cache file deleted')
+        else:
+            outfile = open(self.download_transfer_file, 'w')
             json.dump(transfer_dict, outfile)

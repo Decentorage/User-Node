@@ -15,11 +15,11 @@ def init_file_transfer_user(helper_obj, semaphore_obj):
     semaphore = semaphore_obj
 
 
-def send_data(request, start, ui):
+def send_data(request, start, ui, progress_bar):
     context = zmq.Context()
     client_socket = context.socket(zmq.PAIR)
     client_socket.connect("tcp://" + request['ip'] + ":" + str(request['port']))
-    print("Connected to host")
+    print("Connected to host", "tcp://" + request['ip'] + ":" + str(request['port']))
     frame = client_socket.recv()
     frame = pickle.loads(frame)
 
@@ -45,7 +45,7 @@ def send_data(request, start, ui):
             client_socket.send(data_frame)
             ack_frame = client_socket.recv()
             data = f.read(helper.send_chunk_size)
-
+            progress_bar(helper.send_chunk_size)
         except:
             print("Connection Lost")
             sleep(5)
@@ -73,6 +73,7 @@ def send_data(request, start, ui):
                 client_socket.RCVTIMEO = 1000
 
                 data = f.read(helper.send_chunk_size)
+                progress_bar(helper.send_chunk_size)
             except:
                 print("Unable to reconnect, terminating connection")
                 success = False
@@ -108,12 +109,12 @@ def send_data(request, start, ui):
     print("Done uploading")
 
 
-def receive_data(request):
+def receive_data(request, progress_bar):
 
     context = zmq.Context()
     client_socket = context.socket(zmq.PAIR)
     client_socket.connect("tcp://" + request['ip'] + ":" + str(request['port']))
-    print("Connected to host")
+    print("Connected to host", "tcp://" + request['ip'] + ":" + str(request['port']))
     # receive start frame
     frame = client_socket.recv()
     frame = pickle.loads(frame)
@@ -123,9 +124,9 @@ def receive_data(request):
     f = None
 
     # if file exists, resume upload, open in append mode, inform sender where it has stopped
-    if os.path.isfile(request['shard_id']):
+    if os.path.isfile(os.path.join(helper.shards_directory_path, request['shard_id'])):
         print("resume")
-        file_size = os.path.getsize(request['shard_id'])
+        file_size = os.path.getsize(os.path.join(helper.shards_directory_path, request['shard_id']))
         resume_frame = {"type": "resume", "data": file_size}
         resume_frame = pickle.dumps(resume_frame)
         client_socket.send(resume_frame)
@@ -150,6 +151,7 @@ def receive_data(request):
                 # client_socket.send(ack_frame)
                 data = frame["data"]
                 f.write(data)
+                progress_bar(helper.send_chunk_size, "download")
 
             elif frame["type"] == "END":
                 f.close()
@@ -198,7 +200,7 @@ def receive_data(request):
 
 
 # incomplete active connections
-def check_old_connections(ui):
+def check_old_connections(ui, progress_bar):
     print("Checking old connections")
     try:
         connections = {}
@@ -212,9 +214,9 @@ def check_old_connections(ui):
             request = dict(connections['connections'][i])
             print("Reconnecting host", request['ip'], request["port"])
             if request['type'] == 'upload':
-                send_data(request, False, ui)
+                send_data(request, False, ui, progress_bar)
             elif request['type'] == 'download':
-                receive_data(request)
+                receive_data(request, progress_bar)
 
 
 # add new connection to file

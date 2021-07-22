@@ -16,6 +16,7 @@ def process_segment(from_file, key, segment_number, transfer_obj, ui, progress_b
     """
     This function takes a segment then start to process it if it's not already processed, and start uploading shard
     by shard
+    :param ui: ui object.
     :param progress_bar: progress bar to show the percentage of upload
     :param from_file: segment file that will be processed
     :param key: encryption key used to encrypt segment
@@ -51,7 +52,7 @@ def process_segment(from_file, key, segment_number, transfer_obj, ui, progress_b
             function_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print("Error in Erasure coding", exc_type, function_name, exc_tb.tb_lineno)
             return
-        # Process#2:    Rename Shards to their new ids
+        # Process#3:    Rename Shards to their new ids
         try:
             shards = os.listdir(helper.shards_directory_path)
             shards_new = transfer_obj['segments'][segment_number]['shards']
@@ -84,15 +85,14 @@ def process_segment(from_file, key, segment_number, transfer_obj, ui, progress_b
                    'auth': shard['shared_authentication_key'],
                    'ip': shard['ip_address'],
                    "segment_number": segment_number,
-                   "shard_index": shard_index
+                   "shard_index": shard_index,
+                   "shard_size": transfer_obj['segments'][segment_number]['shard_size']
                    }
             # Add connection
             add_connection(req)
 
             # Send data to storage node
-            send_data(req, True, ui)
-
-            progress_bar(transfer_obj['segments'][segment_number]['shard_size'])
+            send_data(req, True, ui, progress_bar)
 
             # Save new state of the shard
             # transfer_obj['segments'][segment_number]['shards'][shard_index]['done_uploading'] = True
@@ -100,7 +100,6 @@ def process_segment(from_file, key, segment_number, transfer_obj, ui, progress_b
             print("Segment#", segment_number, "Shard#", shard_index, "--------Done Uploading.----------")
 
         else:
-            progress_bar(transfer_obj['segments'][segment_number]['shard_size'])
             print("Segment#", segment_number, "Shard#", shard_index, "--------Already Uploaded(Skipped)----------")
 
     # Reset
@@ -151,7 +150,7 @@ def process_file(from_file, key, ui, progress_bar, chunk_size=helper.segment_siz
             transfer_obj['key'] = key
             helper.save_transfer_file(transfer_obj)
         print("Key:", key)
-        check_old_connections(ui)
+        check_old_connections(ui, progress_bar)
 
     # File path has been changed
     if file_size != file_size_decentorage:
@@ -247,7 +246,7 @@ def retrieve_original_file(key, info, read_size=helper.segment_size):
             output.write(file_bytes)
         file_obj.close()
     output.close()
-    print("-----------------Done Retrieving File-----------------")
+    print("-----------------Done Retrieving File-----------")
 
 
 def download_shards_and_retrieve(filename, key, ui, progress_bar, read_size=helper.segment_size):
@@ -259,48 +258,74 @@ def download_shards_and_retrieve(filename, key, ui, progress_bar, read_size=help
     :param ui: ui object.
     :param read_size: segment size
     """
-    print("-----------------Request Download from Decentorage ----------------")
-    # get information of the shards to download them
-    segments = start_download(filename, ui)
-    if segments:
-        for segment in segments:
-            for shard in segment['shards']:
-                req = {'type': 'download',
-                       'port': int(shard['port']),
-                       'shard_id': shard['shard_id'],
-                       'auth': shard['auth'],
-                       'ip': shard['ip_address']
-                        }
-                print("-----------------Downloading Shard#"+str(shard['shard_no'])+" in Segment#" +
-                      str(shard['segment_no'])+"----------------")
-                # Add connection
-                add_connection(req)
-                # Receive data to storage node
-                receive_data(req)
-                progress_bar(segment['shard_size'])
-                print("-----------------Download Done ----------------")
+    transfer_obj = helper.read_download_transfer_file()
+
+    # download is already started, resume the download
+    if not transfer_obj["start_flag"]:
+        print("-----------------Resume Download ----------------")
+        check_old_connections(ui, progress_bar)
+        file_metadata = transfer_obj['file_metadata']
+        segments = file_metadata["segments"]
     else:
-        return
+        print("-----------------Request Download from Decentorage ----------------")
+        # get information of the shards to download them
+        segments = start_download(filename, ui)
+        if segments:
+            for segment in segments:
+                for shard in segment['shards']:
+                    req = {'type': 'download',
+                           'port': int(shard['port']),
+                           'shard_id': shard['shard_id'],
+                           'auth': shard['auth'],
+                           'ip': shard['ip_address']}
+                    print("-----------------Add Connection to Shard#"+str(shard['shard_no'])+" in Segment#" +
+                          str(shard['segment_no'])+"----------------")
+                    # Add connection
+                    add_connection(req)
+
+            # prepare file metadata dictionary needed by retrieve original file function.
+            file_metadata = {
+                "filename": filename,
+                "segments": segments
+            }
+            transfer_obj["start_flag"] = False
+            transfer_obj['file_metadata'] = file_metadata
+            helper.save_download_transfer_file(transfer_obj)
+
+            for segment in segments:
+                for shard in segment['shards']:
+                    req = {'type': 'download',
+                           'port': int(shard['port']),
+                           'shard_id': shard['shard_id'],
+                           'auth': shard['auth'],
+                           'ip': shard['ip_address']}
+                    print("-----------------Downloading Shard#"+str(shard['shard_no'])+" in Segment#" +
+                          str(shard['segment_no'])+"----------------")
+
+                    # Receive data from storage node
+                    receive_data(req, progress_bar)
+
+                    print("-----------------Download Done ----------------")
+        else:
+            return
     try:
-        # rename the shards to their original names.
-        print("-----------------Shards Renaming----------------")
-        for segment in segments:
-            for shard in segment['shards']:
-                os.rename(os.path.join(helper.shards_directory_path, shard['shard_id']),
-                          os.path.join(helper.shards_directory_path,
-                                       helper.shard_filename + "_" + str(shard['segment_no']) + "." +
-                                       str(shard['shard_no']) + "_" + str(segment["m"])))
-        print("-----------------Shards Renamed-----------------")
+        if not transfer_obj['shards_renamed']:
+            # rename the shards to their original names.
+            print("-----------------Shards Renaming----------------")
+            for segment in segments:
+                for shard in segment['shards']:
+                    os.rename(os.path.join(helper.shards_directory_path, shard['shard_id']),
+                              os.path.join(helper.shards_directory_path,
+                                           helper.shard_filename + "_" + str(shard['segment_no']) + "." +
+                                           str(shard['shard_no']) + "_" + str(segment["m"])))
+            print("-----------------Shards Renamed-----------------")
+            transfer_obj['shards_renamed'] = True
+            helper.save_download_transfer_file(transfer_obj)
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         function_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         print("Error in renaming shards", exc_type, function_name, exc_tb.tb_lineno)
         return
-    # prepare file metadata dictionary needed by retrieve original file function.
-    file_metadata = {
-        "filename": filename,
-        "segments": segments
-    }
     print("-----------------Start retrieving-----------------")
     retrieve_original_file(key, file_metadata, read_size)
     print("-----------------Done retrieving-----------------")
@@ -308,6 +333,10 @@ def download_shards_and_retrieve(filename, key, ui, progress_bar, read_size=help
     helper.reset_directories()
     helper.reset_shards()
     change_current_page(ui.main_page, ui)
+    try:
+        os.remove(helper.download_transfer_file)
+    except:
+        raise Exception("Error Occurred while deleting transfer file.")
 
 
 def change_current_page(target_page, ui):
