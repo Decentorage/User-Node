@@ -169,7 +169,11 @@ def process_file(from_file, key, ui, progress_bar, chunk_size=helper.segment_siz
             os.remove(helper.transfer_file)
         except:
             raise Exception("Error Occurred while deleting transfer file.")
-        print("Done Processing and uploading file.")
+        file_done_uploading(ui)
+        transition_after_operation(ui.transition_page, ui, "File Uploaded Successfully")
+        helper.reset_directories()
+        helper.reset_shards()
+        print("-----------------Done Processing and uploading file-----------------")
         return
     filename = os.path.basename(from_file)
     segment_num = 0
@@ -193,15 +197,19 @@ def process_file(from_file, key, ui, progress_bar, chunk_size=helper.segment_siz
         else:
             print("Segment#", segment_num, "Already Uploaded(Skipped).")
         segment_num = segment_num + 1
+
     try:
         os.remove(helper.transfer_file)
     except:
         raise Exception("Error Occurred while deleting transfer file.")
-    response = file_done_uploading(ui)
-    change_current_page(ui.main_page, ui)
+
+    file_done_uploading(ui)
+    transition_after_operation(ui.transition_page, ui, "File Uploaded Successfully")
     helper.reset_directories()
+    helper.reset_shards()
     input_file.close()
-    print("Done Processing and uploading file.")
+    print("-----------------Cleaning up-----------------")
+    print("-----------------Done Processing and uploading file-----------------")
     # except Exception as e:
     #    exc_type, exc_obj, exc_tb = sys.exc_info()
     #    filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -332,21 +340,24 @@ def download_shards_and_retrieve(filename, key, ui, progress_bar, read_size=help
     print("-----------------Cleaning up-----------------")
     helper.reset_directories()
     helper.reset_shards()
-    change_current_page(ui.main_page, ui)
+    transition_after_operation(ui.transition_page, ui, "File Downloaded Successfully")
     try:
         os.remove(helper.download_transfer_file)
     except:
         raise Exception("Error Occurred while deleting transfer file.")
 
 
-def change_current_page(target_page, ui):
+def transition_after_operation(target_page, ui, msg):
 
     class ChangePageSignalEmitter(QObject):
         change_page_trigger = pyqtSignal(QWidget)
+        change_body_trigger = pyqtSignal(str)
 
-        def change_page(self, stacked_widget, target):
+        def change_page(self, stacked_widget, target, message):
             self.change_page_trigger.connect(stacked_widget.setCurrentWidget)
             self.change_page_trigger.emit(target)
+            self.change_body_trigger.connect(ui.transition_label.setText)
+            self.change_body_trigger.emit(message)
 
     change_page_signal_emitter = ChangePageSignalEmitter()
-    change_page_signal_emitter.change_page(ui.stackedWidget, target_page)
+    change_page_signal_emitter.change_page(ui.stackedWidget, target_page, msg)

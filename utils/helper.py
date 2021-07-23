@@ -14,7 +14,7 @@ class Helper:
         # define directories used in workspace.
         self.shards_directory_path = os.path.realpath("data/shards")
         self.segments_directory_path = os.path.realpath("data/segments")
-        self.downloaded_output = os.path.realpath("data/output data")
+        self.downloaded_output = os.path.realpath("data/downloaded data")
         self.encryption_directory = os.path.realpath("data/encrypted")
         self.cache_file = os.path.realpath("data/cache/decentorage_cache")
         self.transfer_file = os.path.realpath("data/cache/decentorage_transfer.json")
@@ -27,13 +27,13 @@ class Helper:
 
         # define some parameters used through the application
         self.host_url = "http://192.168.1.10:5000/"
-        self.frontend_url = "http:localhost:3000/"
+        self.frontend_url = "http://decentorage.tech/user"
         self.client_url_prefix = 'user/'
         self.server_not_responding = "Check your internet connection"
         self.erasure_factor = 1
         self.minimum_data_shard = 2
         self.audits_default_count = 100
-        self.upload_polling_time = 10
+        self.upload_polling_time = 2
         self.min_price = 0.25
         self.state_upload_file = '1'
         self.state_upload_file_text = "Please enter your encryption key and start your upload"
@@ -47,7 +47,7 @@ class Helper:
 
         # mem = virtual_memory()
         # self.segment_size = math.floor(mem - int(2 * self.gigabyte))
-        self.segment_size = int(200 * self.megabyte)                             # temporary value for test purposes
+        self.segment_size = int(500 * self.megabyte)                             # temporary value for test purposes
 
         # create directories if not exist.
         if not os.path.exists(self.shards_directory_path):
