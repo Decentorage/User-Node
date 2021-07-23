@@ -40,10 +40,7 @@ class ContractDetails(QtWidgets.QWidget):
         self.contract_details['download_count'] = self.ui.contract_details_download_counts_spin_box.value()
         self.contract_details['duration_in_months'] = self.ui.contract_details_months_spin_box.value()
         price = get_price(self.contract_details, self.ui)
-        if price == self.helper.min_price:
-            self.ui.contract_details_price_label.setText("Minimum price:" + str(self.helper.min_price) + " ETH")
-        else:
-            self.ui.contract_details_price_label.setText("Price:" + str(float(price/1000000000000000000)) + " ETH")
+        self.ui.contract_details_price_label.setText("Price:" + str(float(price/1000000000000000000)) + " ETH")
 
     def request_contract(self):
         self.contract_details['download_count'] = self.ui.contract_details_download_counts_spin_box.value()

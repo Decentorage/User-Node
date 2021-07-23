@@ -2,7 +2,7 @@ import json
 from PyQt5.QtCore import QThreadPool, QObject, pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget
-from pages import Main, Login, UploadMain, ContractDetails, ShowFiles
+from pages import Main, Login, UploadMain, ContractDetails, ShowFiles, Transition
 from PyQt5 import QtWidgets
 from gui.ui import Ui_MainWindow
 from .worker import call_worker
@@ -35,6 +35,7 @@ class PageController:
         self.upload_main = UploadMain(self.ui, self.helper)
         self.show_files = ShowFiles(self.ui, self.helper)
         self.contract_details = ContractDetails(self.ui, self.helper)
+        self.transition = Transition(self.ui, self.helper)
 
         # Error page button
         self.ui.error_ok_pb.clicked.connect(self.return_from_error_page)
@@ -51,6 +52,7 @@ class PageController:
         self.upload_main.start_uploading_switch.connect(lambda: self.switch_start_upload("Uploading file.."))
         self.contract_details.go_to_upload_main_switch.connect(self.switch_upload_main)
         self.contract_details.request_contract_switch.connect(self.switch_create_contract)
+        self.transition.okay_switch.connect(self.switch_to_main)
 
         if os.path.exists(self.helper.transfer_file):
             with open(self.helper.transfer_file) as json_file:

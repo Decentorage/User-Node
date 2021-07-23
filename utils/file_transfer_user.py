@@ -1,3 +1,4 @@
+import socket
 from time import sleep
 import json
 import os
@@ -139,19 +140,22 @@ def receive_data(request, progress_bar):
         print("Starting download")
         f = open(os.path.join(helper.shards_directory_path, request['shard_id']), "wb")
 
-    client_socket.RCVTIMEO = 10000
+    client_socket.RCVTIMEO = 30000
     while True:
         try:
             frame = client_socket.recv()
             frame = pickle.loads(frame)
             print(frame["type"])
             if frame["type"] == "data":
-                # ack_frame = {"type": "ACK"}
-                # ack_frame = pickle.dumps(ack_frame)
-                # client_socket.send(ack_frame)
                 data = frame["data"]
                 f.write(data)
+                print("received frame ", frame["type"])
                 progress_bar(helper.send_chunk_size, "download")
+                print("sending ack frame")
+                ack_frame = {"type": "ACK"}
+                ack_frame = pickle.dumps(ack_frame)
+                client_socket.send(ack_frame)
+                print("sent ack")
 
             elif frame["type"] == "END":
                 f.close()
@@ -163,30 +167,31 @@ def receive_data(request, progress_bar):
             sleep(5)
 
             connected = False
-            try:
-                client_socket = context.socket(zmq.PAIR)
-                client_socket.connect("tcp://" + request['ip'] + ":" + str(request['port']))
-                client_socket.RCVTIMEO = 1000 * 60 * 60
+            #try:
+            client_socket.close()
+            client_socket = context.socket(zmq.PAIR)
+            client_socket.connect("tcp://" + request['ip'] + ":" + str(request['port']))
+            client_socket.RCVTIMEO = 1000 * 60 * 60
 
-                # received start frame, reconnected to host
-                start_frame = client_socket.recv()
-                start_frame = pickle.loads(frame)
-                print("Reconnected Successfully")
+            # received start frame, reconnected to host
+            start_frame = client_socket.recv()
+            start_frame = pickle.loads(start_frame)
+            print("Reconnected Successfully")
 
-                # send host where it has received
-                f.close()
-                file_size = os.path.getsize(request['shard_id'])
-                resume_frame = {"type": "resume", "data": file_size}
-                resume_frame = pickle.dumps(resume_frame)
-                client_socket.send(resume_frame)
-                print("Resume download from ", file_size)
+            # send host where it has received
+            f.close()
+            file_size = os.path.getsize(os.path.join(helper.shards_directory_path, request['shard_id']))
+            resume_frame = {"type": "resume", "data": file_size}
+            resume_frame = pickle.dumps(resume_frame)
+            client_socket.send(resume_frame)
+            print("Resume download from ", file_size)
 
-                f = open(os.path.join(helper.shards_directory_path, request['shard_id']), "ab")
-                client_socket.RCVTIMEO = 1000
+            f = open(os.path.join(helper.shards_directory_path, request['shard_id']), "ab")
+            client_socket.RCVTIMEO = 30000
 
-            except:
-                print("Unable to reconnect, terminating connection")
-                break
+            #except:
+            # print("Unable to reconnect, terminating connection")
+            #break
 
     client_socket.close()
     f.close()

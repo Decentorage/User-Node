@@ -16,7 +16,6 @@ class UploadMain(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
         self.ui = ui
         self.helper = helper
-        self.url = "www.google.com"
         self.filename = None
         self.key = None
         # Connectors
@@ -25,6 +24,7 @@ class UploadMain(QtWidgets.QWidget):
         self.ui.upload_main_start_uploading_pb.clicked.connect(self.start_uploading_switch.emit)
         self.ui.upload_main_encryption_key_line_edit.textChanged[str].connect(self.check_start_upload_conditions)
         self.ui.upload_main_request_contract_pb.clicked.connect(self.request_contract)
+        self.ui.upload_main_pay_contract_pb.clicked.connect(self.request_contract)
 
     def back_to_main(self):
         self.back_to_main_switch.emit()
@@ -35,7 +35,7 @@ class UploadMain(QtWidgets.QWidget):
             self.contract_details_switch.emit(self.filename)
 
     def request_contract(self):
-        webbrowser.open_new(self.url)
+        webbrowser.open_new(self.helper.frontend_url)
 
     def browse(self):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName()
@@ -83,25 +83,28 @@ class UploadMain(QtWidgets.QWidget):
                     self.ui.upload_main_start_uploading_pb.setText("Start Uploading")
                 self.ui.upload_main_encryption_key_line_edit.setEnabled(True)
                 self.ui.upload_main_initiate_contract_pb.setEnabled(False)
+                self.ui.upload_main_pay_contract_pb.setEnabled(False)
                 self.ui.upload_main_status_label.setText(self.helper.state_upload_file_text)
-            # State: no pending contract instance and there is seeds
+            # State: no pending contract instance and there are seeds
             elif state == self.helper.state_create_contract:
                 self.ui.upload_main_start_uploading_pb.setEnabled(False)
                 self.ui.upload_main_encryption_key_line_edit.setEnabled(False)
                 self.ui.upload_main_initiate_contract_pb.setEnabled(True)
+                self.ui.upload_main_pay_contract_pb.setEnabled(False)
                 self.ui.upload_main_status_label.setText(self.helper.state_create_contract_text)
             # State: no pending contract instance and no seeds
             elif state == self.helper.state_no_seeds:
                 self.ui.upload_main_start_uploading_pb.setEnabled(False)
                 self.ui.upload_main_encryption_key_line_edit.setEnabled(False)
                 self.ui.upload_main_initiate_contract_pb.setEnabled(False)
+                self.ui.upload_main_pay_contract_pb.setEnabled(False)
                 self.ui.upload_main_status_label.setText(self.helper.state_no_seeds_text)
             # State: there is a pending contract but not paid
             else:
                 self.ui.upload_main_start_uploading_pb.setEnabled(False)
                 self.ui.upload_main_encryption_key_line_edit.setEnabled(False)
                 self.ui.upload_main_initiate_contract_pb.setEnabled(False)
-                # TODO: Add button redirect to web to pay pending contract.
+                self.ui.upload_main_pay_contract_pb.setEnabled(True)
                 self.ui.upload_main_status_label.setText(self.helper.state_unpaid_pending_contract_text)
 
             time.sleep(self.helper.upload_polling_time)

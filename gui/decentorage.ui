@@ -19,7 +19,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>6</number>
+        <number>7</number>
        </property>
        <widget class="QWidget" name="loading_page">
         <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -339,7 +339,7 @@
            <item>
             <widget class="QPushButton" name="main_upload_files_pb">
              <property name="text">
-              <string>Upload Files</string>
+              <string>Upload File</string>
              </property>
             </widget>
            </item>
@@ -442,7 +442,7 @@
        <widget class="QWidget" name="upload_main_page">
         <layout class="QVBoxLayout" name="verticalLayout_12">
          <item>
-          <layout class="QVBoxLayout" name="verticalLayout_11" stretch="0,0,0,0,0">
+          <layout class="QVBoxLayout" name="verticalLayout_11" stretch="0,0,0,0,0,0">
            <item>
             <widget class="QLabel" name="upload_main_status_label">
              <property name="text">
@@ -455,7 +455,7 @@
              <item>
               <widget class="QPushButton" name="upload_main_request_contract_pb">
                <property name="text">
-                <string>Request Contract</string>
+                <string>Buy Seeds</string>
                </property>
               </widget>
              </item>
@@ -490,6 +490,13 @@
             </layout>
            </item>
            <item>
+            <widget class="QPushButton" name="upload_main_pay_contract_pb">
+             <property name="text">
+              <string>Pay Contract</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QPushButton" name="upload_main_start_uploading_pb">
              <property name="enabled">
               <bool>false</bool>
@@ -505,6 +512,70 @@
               <string>Back to Main</string>
              </property>
             </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="transition_page">
+        <layout class="QVBoxLayout" name="verticalLayout_21">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_20">
+           <item>
+            <spacer name="verticalSpacer_15">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QLabel" name="transition_label">
+             <property name="text">
+              <string>TextLabel</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_14">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="transition_okay_pb">
+             <property name="text">
+              <string>Okay</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_16">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
            </item>
           </layout>
          </item>
