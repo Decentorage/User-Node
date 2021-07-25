@@ -37,7 +37,7 @@ def send_data(request, start, ui, progress_bar):
 
     print("chunk size:", helper.send_chunk_size)
     data = f.read(helper.send_chunk_size)
-    client_socket.RCVTIMEO = 10000
+    client_socket.RCVTIMEO = 30000
     print("Start sending data to host")
     while data:
         try:
@@ -71,7 +71,7 @@ def send_data(request, start, ui, progress_bar):
                 resume_msg = resume_frame["data"]
                 print(resume_msg)
                 f.seek(resume_msg, 0)
-                client_socket.RCVTIMEO = 1000
+                client_socket.RCVTIMEO = 30000
 
                 data = f.read(helper.send_chunk_size)
                 progress_bar(helper.send_chunk_size)
