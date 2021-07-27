@@ -114,7 +114,7 @@ class PageController:
 
     def cleanup(self):
         self.ui.about_to_close = True
-        # os._exit(0)
+        os._exit(0)
 
     def return_from_error_page(self):
         self.change_current_page(self.ui.error_source_page)
