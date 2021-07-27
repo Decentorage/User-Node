@@ -1,9 +1,8 @@
 import os
 import sys
-
+import time
 from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtWidgets import QWidget
-
 from .erasure_coding import encode, decode
 from .encryption import encrypt, decrypt
 from .helper import Helper
@@ -116,6 +115,7 @@ def process_file(from_file, key, ui, progress_bar, chunk_size=helper.segment_siz
     :param ui: ui object
     """
     # try:
+    start = time.time()
     print("process file function")
     # Get needed data to start processing and uploading.
     transfer_obj = helper.read_transfer_file()
@@ -174,6 +174,7 @@ def process_file(from_file, key, ui, progress_bar, chunk_size=helper.segment_siz
         helper.reset_directories()
         helper.reset_shards()
         print("-----------------Done Processing and uploading file-----------------")
+        print("Time: ", time.time() - start)
         return
     filename = os.path.basename(from_file)
     segment_num = 0
@@ -210,6 +211,7 @@ def process_file(from_file, key, ui, progress_bar, chunk_size=helper.segment_siz
     input_file.close()
     print("-----------------Cleaning up-----------------")
     print("-----------------Done Processing and uploading file-----------------")
+    print("Time: ", time.time() - start)
     # except Exception as e:
     #    exc_type, exc_obj, exc_tb = sys.exc_info()
     #    filename = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]

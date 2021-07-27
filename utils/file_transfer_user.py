@@ -37,7 +37,7 @@ def send_data(request, start, ui, progress_bar):
 
     print("chunk size:", helper.send_chunk_size)
     data = f.read(helper.send_chunk_size)
-    client_socket.RCVTIMEO = 30000
+    client_socket.RCVTIMEO = helper.receive_timeout
     print("Start sending data to host")
     while data:
         try:
@@ -56,7 +56,7 @@ def send_data(request, start, ui, progress_bar):
                 client_socket.close()
                 client_socket = context.socket(zmq.PAIR)
                 client_socket.connect("tcp://" + request['ip'] + ":" + str(request['port']))
-                client_socket.RCVTIMEO = 1000*60*60
+                client_socket.RCVTIMEO = helper.disconnect_timeout
                 print("connected to", "tcp://" + request['ip'] + ":" + str(request['port']))
 
                 # received start frame, reconnected to host
@@ -71,7 +71,7 @@ def send_data(request, start, ui, progress_bar):
                 resume_msg = resume_frame["data"]
                 print(resume_msg)
                 f.seek(resume_msg, 0)
-                client_socket.RCVTIMEO = 30000
+                client_socket.RCVTIMEO = helper.receive_timeout
 
                 data = f.read(helper.send_chunk_size)
                 progress_bar(helper.send_chunk_size)
@@ -140,7 +140,7 @@ def receive_data(request, progress_bar):
         print("Starting download")
         f = open(os.path.join(helper.shards_directory_path, request['shard_id']), "wb")
 
-    client_socket.RCVTIMEO = 30000
+    client_socket.RCVTIMEO = helper.receive_timeout
     while True:
         try:
             frame = client_socket.recv()
@@ -171,7 +171,7 @@ def receive_data(request, progress_bar):
             client_socket.close()
             client_socket = context.socket(zmq.PAIR)
             client_socket.connect("tcp://" + request['ip'] + ":" + str(request['port']))
-            client_socket.RCVTIMEO = 1000 * 60 * 60
+            client_socket.RCVTIMEO = helper.disconnect_timeout
 
             # received start frame, reconnected to host
             start_frame = client_socket.recv()
@@ -187,7 +187,7 @@ def receive_data(request, progress_bar):
             print("Resume download from ", file_size)
 
             f = open(os.path.join(helper.shards_directory_path, request['shard_id']), "ab")
-            client_socket.RCVTIMEO = 30000
+            client_socket.RCVTIMEO = helper.receive_timeout
 
             #except:
             # print("Unable to reconnect, terminating connection")

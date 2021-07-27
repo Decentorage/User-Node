@@ -23,10 +23,12 @@ class Helper:
         self.icon_path = os.path.realpath("gui/resources/decentorage_icon.png")
         self.shard_filename = "shard"
         self.segment_filename = "segment"
-        self.send_chunk_size = int(10 * self.megabyte)
+        self.send_chunk_size = int(0.5 * self.megabyte)
+        self.receive_timeout = 8000
+        self.disconnect_timeout = 1000*60*60
 
         # define some parameters used through the application
-        self.host_url = "http://192.168.1.10:5000/"
+        self.host_url = "http://a9422c7200db042f59a56cdbf90ae1d2-2016308976.eu-central-1.elb.amazonaws.com:5000/"
         self.frontend_url = "http://decentorage.tech/user"
         self.client_url_prefix = 'user/'
         self.server_not_responding = "Check your internet connection"
@@ -121,7 +123,7 @@ class Helper:
             shard_size = shard_size * 2
 
         # k: number of data shards
-        k = math.ceil(file_size / shard_size)
+        k = self.minimum_data_shard  # math.ceil(file_size / shard_size)
         # m: total number of shards
         m = self.erasure_factor + k
         return k, m

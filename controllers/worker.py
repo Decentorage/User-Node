@@ -92,7 +92,7 @@ def worker_error_page(title, body, ui, target=None):
     change_page_signal_emitter = ErrorSignalEmitter()
     change_page_signal_emitter.display_error()
     # to prevent from returning to previous page in waiting screens.
-    while ui.worker_waiting:    # TODO worker waiting logic check
+    while ui.worker_waiting:
         time.sleep(0.1)
     time.sleep(0.1)
 
